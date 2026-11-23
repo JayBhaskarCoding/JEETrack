@@ -3,16 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
-  <title>JEE Main 2027 Command Center</title>
+  <title>JEETrack — JEE Main 2027 Command Center</title>
 
   <!-- Native Mobile Web App / PWA Meta Tags -->
-  <meta name="application-name" content="JEE 2027 Command" />
-  <meta name="apple-mobile-web-app-title" content="JEE 2027" />
+  <meta name="application-name" content="JEETrack" />
+  <meta name="apple-mobile-web-app-title" content="JEETrack" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#020617" />
   <meta name="description" content="JEE Main 2027 Command Center: 59-Day Schedule, 55-Unit Syllabus Checklist, End-of-Day Check-In, Real-Time Phone-Laptop Sync & 118 Android Alerts." />
+
+  <!-- Static PWA Manifest & Service Worker for GitHub Pages -->
+  <link rel="manifest" href="/JEETrack/manifest.json" />
+  <link rel="apple-touch-icon" href="/JEETrack/jeetrack_icon.png" />
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/JEETrack/sw.js").catch(() => {});
+      });
+    }
+  </script>
 
   <!-- Inter Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -712,9 +723,9 @@
   <!-- APPLICATION LOGIC + FIREBASE FIRESTORE REAL-TIME SYNC                     -->
   <!-- ========================================================================= -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
 
     /* -------------------------------------------------------------------------
        1. EXACT 59-DAY SCHEDULE (NOV 24, 2026 – JAN 21, 2027) WITH SYLLABUS LINKS
@@ -860,7 +871,17 @@
     /* -------------------------------------------------------------------------
        3. STATE & FIREBASE RUNTIME REFERENCES
        ------------------------------------------------------------------------- */
-    const appId = typeof __app_id !== "undefined" ? __app_id : "default-app-id";
+    const appId = "jeetrack-2027";
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyCqIsIL_SFksIZ5E0Y_P31p-DudYefAUY8",
+      authDomain: "jeetrack-2027.firebaseapp.com",
+      projectId: "jeetrack-2027",
+      storageBucket: "jeetrack-2027.firebasestorage.app",
+      messagingSenderId: "1023551552513",
+      appId: "1:1023551552513:web:7f7945a86555fb3ea95400",
+      measurementId: "G-6R76Z9FHXL"
+    };
+
     let db = null;
     let auth = null;
     let currentUser = null;
@@ -982,6 +1003,17 @@
     }
 
     function copyTextToClipboard(text, successMsg) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(
+          () => showToast(successMsg || "Copied to clipboard!", "success"),
+          () => fallbackCopy(text, successMsg)
+        );
+      } else {
+        fallbackCopy(text, successMsg);
+      }
+    }
+
+    function fallbackCopy(text, successMsg) {
       const ta = document.createElement("textarea");
       ta.value = text;
       ta.style.position = "fixed";
@@ -1038,63 +1070,8 @@
     }
 
     /* -------------------------------------------------------------------------
-       6. DYNAMIC PWA MANIFEST (STANDALONE ANDROID APP WITHOUT BROWSER BAR)
+       6. PWA INSTALL PROMPT HANDLER
        ------------------------------------------------------------------------- */
-    function injectPWAManifest() {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = 512;
-        canvas.height = 512;
-        const ctx = canvas.getContext("2d");
-
-        const grad = ctx.createLinearGradient(0, 0, 512, 512);
-        grad.addColorStop(0, "#0ea5e9");
-        grad.addColorStop(1, "#020617");
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.roundRect(0, 0, 512, 512, 110);
-        ctx.fill();
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "900 165px Inter, sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("JEE", 256, 210);
-
-        ctx.fillStyle = "#7dd3fc";
-        ctx.font = "800 84px Inter, sans-serif";
-        ctx.fillText("2027", 256, 355);
-
-        canvas.toBlob((blob) => {
-          if (!blob) return;
-          const iconUrl = URL.createObjectURL(blob);
-          const appleLink = document.createElement("link");
-          appleLink.rel = "apple-touch-icon";
-          appleLink.href = iconUrl;
-          document.head.appendChild(appleLink);
-
-          const manifest = {
-            name: "JEE Main 2027 Command Center",
-            short_name: "JEE 2027",
-            description: "59-Day JEE Main Schedule, 55-Unit Syllabus Checklist & Daily Sync",
-            start_url: window.location.href.split("#")[0],
-            display: "standalone",
-            orientation: "portrait",
-            background_color: "#020617",
-            theme_color: "#020617",
-            icons: [{ src: iconUrl, sizes: "512x512", type: "image/png", purpose: "any maskable" }]
-          };
-          const mBlob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
-          const mLink = document.createElement("link");
-          mLink.rel = "manifest";
-          mLink.href = URL.createObjectURL(mBlob);
-          document.head.appendChild(mLink);
-        }, "image/png");
-      } catch (err) {
-        console.warn("PWA manifest note:", err);
-      }
-    }
-
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredInstallPrompt = e;
@@ -1111,12 +1088,12 @@
       }
       deferredInstallPrompt.prompt();
       const { outcome } = await deferredInstallPrompt.userChoice;
-      if (outcome === "accepted") showToast("Installed! Open JEE 2027 directly from your Home Screen.", "success");
+      if (outcome === "accepted") showToast("Installed! Open JEETrack directly from your Home Screen.", "success");
       deferredInstallPrompt = null;
     }
 
     /* -------------------------------------------------------------------------
-       7. FIREBASE AUTH & FIRESTORE REAL-TIME CROSS-DEVICE SYNC
+       7. FIREBASE AUTH, LOCAL CACHE, ANDROID BRIDGE & FIRESTORE REAL-TIME SYNC
        ------------------------------------------------------------------------- */
     function updateSyncUI(kind, label) {
       const colors = {
@@ -1135,13 +1112,64 @@
       if (mTxt) mTxt.textContent = label;
     }
 
+    function applySyncRoomUI(room) {
+      activeRoomId = room;
+      const input = document.getElementById("sync-room-input");
+      if (input) input.value = room;
+      const copyRm = document.getElementById("copy-room-btn");
+      const leaveBtn = document.getElementById("leave-room-btn");
+      const badge = document.getElementById("sync-mode-badge");
+      if (room) {
+        if (badge) badge.textContent = `Room: ${room}`;
+        if (leaveBtn) leaveBtn.classList.remove("hidden");
+        if (copyRm) { copyRm.classList.remove("hidden"); copyRm.classList.add("flex"); }
+      } else {
+        if (badge) badge.textContent = "Private Session";
+        if (leaveBtn) leaveBtn.classList.add("hidden");
+        if (copyRm) { copyRm.classList.add("hidden"); copyRm.classList.remove("flex"); }
+      }
+    }
+
+    function syncNativeAndroidAlarms() {
+      if (window.AndroidBridge && typeof window.AndroidBridge.updateAlarms === "function") {
+        const [mH, mM] = (state.settings.morningTime || "07:00").split(":").map(Number);
+        const [eH, eM] = (state.settings.eveningTime || "21:30").split(":").map(Number);
+        window.AndroidBridge.updateAlarms(mH, mM, eH, eM);
+      }
+    }
+
+    function saveLocalCache() {
+      try {
+        localStorage.setItem("jeetrack_local_cache", JSON.stringify({
+          schedule: state.schedule,
+          syllabus: state.syllabus,
+          settings: state.settings
+        }));
+      } catch (_) {}
+    }
+
+    function loadLocalCache() {
+      try {
+        const raw = localStorage.getItem("jeetrack_local_cache");
+        if (!raw) return;
+        const cached = JSON.parse(raw);
+        if (cached.schedule && typeof cached.schedule === "object") state.schedule = cached.schedule;
+        if (cached.syllabus && typeof cached.syllabus === "object") state.syllabus = cached.syllabus;
+        if (cached.settings && typeof cached.settings === "object") {
+          state.settings = { ...state.settings, ...cached.settings };
+          const mIn = document.getElementById("morning-time-input");
+          const eIn = document.getElementById("evening-time-input");
+          if (mIn && state.settings.morningTime) mIn.value = state.settings.morningTime;
+          if (eIn && state.settings.eveningTime) eIn.value = state.settings.eveningTime;
+        }
+      } catch (_) {}
+    }
+
     function getCloudDocRef() {
       if (!db || !currentUser) return null;
       if (activeRoomId) {
-        // RULE 1: Strict public path for shared cross-device Sync Room
         return doc(db, "artifacts", appId, "public", "data", "jeeSyncRooms", activeRoomId);
       }
-      // RULE 1: Strict private user path
       return doc(db, "artifacts", appId, "users", currentUser.uid, "jeeCommandCenter", "state");
     }
 
@@ -1170,8 +1198,9 @@
               if (mIn && state.settings.morningTime) mIn.value = state.settings.morningTime;
               if (eIn && state.settings.eveningTime) eIn.value = state.settings.eveningTime;
             }
+            saveLocalCache();
+            syncNativeAndroidAlarms();
           } else if (seedIfEmpty) {
-            // Initialize brand-new Sync Room with current session progress
             saveCloudState(true);
           }
           updateSyncUI("synced", activeRoomId ? `Synced • Room: ${activeRoomId}` : "Cloud Synced");
@@ -1179,16 +1208,17 @@
         },
         (err) => {
           console.error("Firestore onSnapshot error:", err);
-          updateSyncUI("error", "Sync Error (Session Active)");
-          showToast("Cloud sync listener error. Updates kept in current session.", "warning");
+          updateSyncUI("error", "Sync Error");
+          showToast("Cloud sync error: check Firestore rules or internet.", "warning");
         }
       );
     }
 
     let saveTimer = null;
     function saveCloudState(immediate = false) {
+      saveLocalCache();
       if (!db || !currentUser) {
-        updateSyncUI("offline", "Local Session Mode");
+        updateSyncUI("offline", "Local Mode");
         return;
       }
       const execute = async () => {
@@ -1207,7 +1237,7 @@
         } catch (err) {
           console.error("Firestore write failed:", err);
           updateSyncUI("error", "Save Failed");
-          showToast("Could not save to cloud. Check connection.", "error");
+          showToast("Could not save to cloud. Check Firestore rules.", "error");
         }
       };
 
@@ -1217,18 +1247,18 @@
     }
 
     async function initFirebase() {
+      loadLocalCache();
+      renderAll();
+
       try {
-        if (typeof __firebase_config === "undefined" || !__firebase_config) {
-          updateSyncUI("offline", "Preview Mode (No Cloud Config)");
-          document.getElementById("full-user-id").textContent = "Preview Mode (Cloud Config Unavailable)";
-          return;
-        }
-        const cfg = typeof __firebase_config === "string" ? JSON.parse(__firebase_config) : __firebase_config;
+        const cfg = (typeof __firebase_config !== "undefined" && __firebase_config)
+          ? (typeof __firebase_config === "string" ? JSON.parse(__firebase_config) : __firebase_config)
+          : FIREBASE_CONFIG;
+
         const app = initializeApp(cfg);
         auth = getAuth(app);
         db = getFirestore(app);
 
-        // RULE 3: Authenticate FIRST before any Firestore reads/writes
         if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
         } else {
@@ -1238,12 +1268,18 @@
         currentUser = auth.currentUser;
         if (currentUser) {
           document.getElementById("full-user-id").textContent = currentUser.uid;
-          subscribeCloudState(false);
+          const savedRoom = localStorage.getItem("jeetrack_sync_room") || "";
+          if (savedRoom) {
+            applySyncRoomUI(savedRoom);
+            subscribeCloudState(true);
+          } else {
+            subscribeCloudState(false);
+          }
         }
       } catch (err) {
         console.error("Firebase initialization failed:", err);
-        updateSyncUI("offline", "Local Session Mode");
-        document.getElementById("full-user-id").textContent = "Auth Unavailable";
+        updateSyncUI("error", "Auth Error");
+        document.getElementById("full-user-id").textContent = `Error: ${err.code || err.message}`;
       }
     }
 
@@ -1488,7 +1524,6 @@
     }
 
     function renderBreakdownList() {
-      // Style week filter chips
       document.querySelectorAll(".week-chip").forEach((btn) => {
         const active = btn.dataset.week === state.weekFilter;
         btn.className = `week-chip px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition ${active
@@ -1656,6 +1691,11 @@
     }
 
     function renderSyncView() {
+      const mIn = document.getElementById("morning-time-input");
+      const eIn = document.getElementById("evening-time-input");
+      if (mIn && state.settings.morningTime) mIn.value = state.settings.morningTime;
+      if (eIn && state.settings.eveningTime) eIn.value = state.settings.eveningTime;
+
       const todayIso = getClampedTodayDate();
       const item = SCHEDULE_DATA.find((d) => d.date === todayIso) || SCHEDULE_DATA[0];
       const box = document.getElementById("alert-preview-box");
@@ -1673,6 +1713,11 @@
     function updatePushBadge() {
       const pill = document.getElementById("push-status-pill");
       if (!pill) return;
+      if (window.AndroidBridge && typeof window.AndroidBridge.isNativeApp === "function") {
+        pill.textContent = "Native Android Alarms ✓";
+        pill.className = "px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-300";
+        return;
+      }
       if (!("Notification" in window)) {
         pill.textContent = "Use .ics Alarms";
         pill.className = "px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300";
@@ -1762,6 +1807,9 @@
       modal.classList.remove("hidden");
       modal.classList.add("flex");
     }
+
+    // Bridges native Android evening notification tap into this modal
+    window.openCheckInModal = openCheckinModal;
 
     function closeCheckinModal() {
       const modal = document.getElementById("checkin-modal");
@@ -1900,7 +1948,6 @@
       SCHEDULE_DATA.forEach((d) => {
         const ymd = d.date.replace(/-/g, "");
 
-        // 1. Morning Briefing Event (59 events)
         const mSummary = `JEE Day ${d.dayNum} Study: M: ${d.maths} | P: ${d.physics} | C: ${d.chem}`;
         const mDesc = [
           `JEE Main 2027 — Day ${d.dayNum} of 59 (${d.week})`,
@@ -1933,7 +1980,6 @@
           "END:VEVENT"
         );
 
-        // 2. Evening End-of-Day Check-In Event (59 events) => 118 total events!
         const eSummary = `JEE Day ${d.dayNum} Check-In: Mark Completed Chapters & Log PYQs`;
         const eDesc = [
           `End-of-Day Check-In for Day ${d.dayNum} (${d.week})`,
@@ -1964,7 +2010,14 @@
 
       lines.push("END:VCALENDAR");
 
-      const blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+      const icsText = lines.join("\r\n");
+      if (window.AndroidBridge && typeof window.AndroidBridge.shareExportText === "function") {
+        window.AndroidBridge.shareExportText("JEE_Main_2027_118_Android_Alarms.ics", icsText);
+        showToast("Opened Android Share Sheet for 118-event .ics!", "success");
+        return;
+      }
+
+      const blob = new Blob([icsText], { type: "text/calendar;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -2134,7 +2187,7 @@
         renderSyllabusView();
       });
 
-      // Sync Room Controls
+      // Sync Room Controls (Persisted in localStorage)
       document.getElementById("gen-room-btn").addEventListener("click", () => {
         const rand = "jee27-" + Math.random().toString(36).substring(2, 8);
         document.getElementById("sync-room-input").value = rand;
@@ -2147,25 +2200,15 @@
           showToast("Room ID must be at least 4 letters/numbers.", "warning");
           return;
         }
-        activeRoomId = clean;
-        document.getElementById("sync-room-input").value = clean;
-        document.getElementById("sync-mode-badge").textContent = `Room: ${clean}`;
-        document.getElementById("leave-room-btn").classList.remove("hidden");
-        const copyRm = document.getElementById("copy-room-btn");
-        copyRm.classList.remove("hidden");
-        copyRm.classList.add("flex");
+        localStorage.setItem("jeetrack_sync_room", clean);
+        applySyncRoomUI(clean);
         subscribeCloudState(true);
         showToast(`Connected to Sync Room "${clean}"! Enter this same ID on your other device.`, "success");
       });
 
       document.getElementById("leave-room-btn").addEventListener("click", () => {
-        activeRoomId = "";
-        document.getElementById("sync-room-input").value = "";
-        document.getElementById("sync-mode-badge").textContent = "Private Session";
-        document.getElementById("leave-room-btn").classList.add("hidden");
-        const copyRm = document.getElementById("copy-room-btn");
-        copyRm.classList.add("hidden");
-        copyRm.classList.remove("flex");
+        localStorage.removeItem("jeetrack_sync_room");
+        applySyncRoomUI("");
         subscribeCloudState(false);
         showToast("Switched back to Private Session cloud storage.", "info");
       });
@@ -2179,10 +2222,11 @@
         copyTextToClipboard(uid, "Copied User ID to clipboard!");
       });
 
-      // Reminder Time Pickers & Push Triggers
+      // Reminder Time Pickers & Native Android Bridge Triggers
       document.getElementById("morning-time-input").addEventListener("change", (e) => {
         state.settings.morningTime = e.target.value || "07:00";
         saveCloudState(true);
+        syncNativeAndroidAlarms();
         renderSyncView();
         showToast(`Morning briefing set to ${state.settings.morningTime}`, "success");
       });
@@ -2190,11 +2234,16 @@
       document.getElementById("evening-time-input").addEventListener("change", (e) => {
         state.settings.eveningTime = e.target.value || "21:30";
         saveCloudState(true);
+        syncNativeAndroidAlarms();
         renderSyncView();
         showToast(`End-of-Day Check-In alert set to ${state.settings.eveningTime}`, "success");
       });
 
       document.getElementById("enable-push-btn").addEventListener("click", async () => {
+        if (window.AndroidBridge && typeof window.AndroidBridge.openExactAlarmSettings === "function") {
+          window.AndroidBridge.openExactAlarmSettings();
+          return;
+        }
         if (!("Notification" in window)) {
           showToast("Browser Push is unavailable here. Export the 118-alert .ics calendar instead!", "warning");
           return;
@@ -2205,11 +2254,18 @@
           if (perm === "granted") showToast("Push notifications enabled! Tap 'Test Today's Alert'.", "success");
           else showToast("Permission not granted. Use the .ics Calendar export for guaranteed Android alerts.", "warning");
         } catch (err) {
-          showToast("Push prompt blocked in preview frame. Export the .ics file for Android alarms!", "warning");
+          showToast("Push prompt blocked. Export the .ics file for Android alarms!", "warning");
         }
       });
 
-      document.getElementById("test-alert-btn").addEventListener("click", () => triggerAlertNotification("morning", true));
+      document.getElementById("test-alert-btn").addEventListener("click", () => {
+        if (window.AndroidBridge && typeof window.AndroidBridge.sendTestNotification === "function") {
+          window.AndroidBridge.sendTestNotification("morning");
+          return;
+        }
+        triggerAlertNotification("morning", true);
+      });
+
       document.getElementById("download-ics-btn").addEventListener("click", export118AndroidICS);
 
       // JSON Backup Export & Import
@@ -2221,11 +2277,20 @@
           syllabus: state.syllabus,
           settings: state.settings
         };
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const jsonText = JSON.stringify(payload, null, 2);
+        const filename = `jee_main_2027_backup_${formatISODateLocal(new Date())}.json`;
+
+        if (window.AndroidBridge && typeof window.AndroidBridge.shareExportText === "function") {
+          window.AndroidBridge.shareExportText(filename, jsonText);
+          showToast("Opened Android Share Sheet for JSON backup!", "success");
+          return;
+        }
+
+        const blob = new Blob([jsonText], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `jee_main_2027_backup_${formatISODateLocal(new Date())}.json`;
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -2252,6 +2317,7 @@
                 if (parsed.syllabus) state.syllabus = parsed.syllabus;
                 if (parsed.settings) state.settings = { ...state.settings, ...parsed.settings };
                 saveCloudState(true);
+                syncNativeAndroidAlarms();
                 renderAll();
                 showToast("Backup restored and synced!", "success");
               },
@@ -2270,7 +2336,6 @@
        13. BOOTSTRAP
        ------------------------------------------------------------------------- */
     window.addEventListener("DOMContentLoaded", () => {
-      injectPWAManifest();
       updateCountdowns();
       populateCheckinDateSelect();
       bindEvents();
