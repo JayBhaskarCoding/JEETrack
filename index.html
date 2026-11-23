@@ -1,0 +1,2282 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <title>JEE Main 2027 Command Center</title>
+
+  <!-- Native Mobile Web App / PWA Meta Tags -->
+  <meta name="application-name" content="JEE 2027 Command" />
+  <meta name="apple-mobile-web-app-title" content="JEE 2027" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#020617" />
+  <meta name="description" content="JEE Main 2027 Command Center: 59-Day Schedule, 55-Unit Syllabus Checklist, End-of-Day Check-In, Real-Time Phone-Laptop Sync & 118 Android Alerts." />
+
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              850: '#131d31',
+              925: '#0a101f',
+              950: '#020617',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Chart.js & Lucide Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen overflow-x-hidden antialiased selection:bg-sky-500 selection:text-slate-950">
+
+  <!-- Toast Notification Stack -->
+  <div id="toast-container" class="fixed top-4 right-4 left-4 sm:left-auto sm:w-96 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Custom Confirmation Modal (Replaces native alert/confirm) -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl shadow-black/60">
+      <div class="flex items-start gap-3">
+        <div class="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 shrink-0">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 id="confirm-modal-title" class="text-base font-bold text-white">Confirm Action</h3>
+          <p id="confirm-modal-body" class="text-sm text-slate-400 mt-1 leading-relaxed"></p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-6">
+        <button id="confirm-modal-cancel" class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition">Cancel</button>
+        <button id="confirm-modal-ok" class="px-4 py-2.5 rounded-xl text-sm font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- END-OF-DAY CHECK-IN MODAL (Mobile-Friendly Sheet / Desktop Dialog)        -->
+  <!-- ========================================================================= -->
+  <div id="checkin-modal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-md sm:p-4">
+    <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl shadow-sky-950/50 overflow-hidden">
+
+      <!-- Modal Header -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between gap-3 bg-slate-900/95 shrink-0">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-cyan-500 text-slate-950 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
+            <i data-lucide="check-check" class="w-5 h-5"></i>
+          </div>
+          <div class="min-w-0">
+            <h2 class="text-base sm:text-lg font-extrabold text-white truncate">End-of-Day Check-In</h2>
+            <p id="checkin-subtitle" class="text-xs text-sky-400 font-medium truncate">Mark completed chapters &amp; auto-sync syllabus</p>
+          </div>
+        </div>
+        <button id="close-checkin-btn" aria-label="Close Check-In" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition shrink-0">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Scrollable Body -->
+      <div class="p-5 overflow-y-auto space-y-5 flex-1">
+
+        <!-- Date Selector inside Modal -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
+          <div class="flex items-center gap-2">
+            <i data-lucide="calendar-days" class="w-4 h-4 text-sky-400"></i>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Check-In Date</span>
+          </div>
+          <select id="checkin-date-select" class="w-full sm:w-64 px-3 py-2 rounded-xl text-sm font-semibold bg-slate-900 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-sky-500"></select>
+        </div>
+
+        <!-- 3 Subject Completion Toggles -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Mark Completed Chapters Today</h3>
+            <button id="checkin-mark-all-btn" type="button" class="text-xs font-bold text-sky-400 hover:text-sky-300 transition">Mark All 3 Completed</button>
+          </div>
+          <div id="checkin-subjects-list" class="space-y-2.5">
+            <!-- Dynamically populated for Maths, Physics, Chemistry -->
+          </div>
+        </div>
+
+        <!-- Auto-Sync Syllabus Options -->
+        <div class="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/25 space-y-2">
+          <div class="flex items-center gap-2 text-xs font-bold text-sky-300">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Auto-Update Linked Syllabus Chapters</span>
+          </div>
+          <p class="text-[11px] text-slate-300 leading-relaxed">
+            When you check off a subject above, automatically tick these milestones on the matching chapter(s) in your 55-unit Syllabus Checklist:
+          </p>
+          <div class="flex flex-wrap gap-2 pt-1">
+            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700 text-xs font-semibold text-slate-200 cursor-pointer">
+              <input id="checkin-auto-theory" type="checkbox" checked class="w-4 h-4 accent-sky-500 rounded" />
+              <span>Theory / NCERT</span>
+            </label>
+            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700 text-xs font-semibold text-slate-200 cursor-pointer">
+              <input id="checkin-auto-pyqs" type="checkbox" checked class="w-4 h-4 accent-sky-500 rounded" />
+              <span>PYQs Solved</span>
+            </label>
+            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700 text-xs font-semibold text-slate-200 cursor-pointer">
+              <input id="checkin-auto-revision" type="checkbox" class="w-4 h-4 accent-sky-500 rounded" />
+              <span>Revision Done</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Daily Metrics: PYQs + Mock Score -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+            <label for="checkin-pyqs" class="block text-xs font-bold text-slate-300">Daily PYQs Solved</label>
+            <div class="flex items-center gap-2">
+              <input id="checkin-pyqs" type="number" min="0" max="500" placeholder="0" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-base focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              <button type="button" data-checkin-add-pyq="15" class="checkin-pyq-quick px-2.5 py-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 text-xs font-bold shrink-0">+15</button>
+              <button type="button" data-checkin-add-pyq="30" class="checkin-pyq-quick px-2.5 py-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 text-xs font-bold shrink-0">+30</button>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+            <label for="checkin-mock" class="block text-xs font-bold text-slate-300">Mock / Part-Test Score (/300)</label>
+            <div class="relative">
+              <input id="checkin-mock" type="number" min="-75" max="300" placeholder="Optional (e.g. 210)" class="w-full px-3 py-2.5 pr-14 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-base focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">/ 300</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily Notes / Mistake Log -->
+        <div class="space-y-1.5">
+          <label for="checkin-notes" class="block text-xs font-bold text-slate-300">Mistake Notebook &amp; Reflections</label>
+          <textarea id="checkin-notes" rows="3" placeholder="What went well? Which formulas, traps, or weak concepts need revision tomorrow?" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-4 border-t border-slate-800 bg-slate-900 flex items-center justify-end gap-3 shrink-0">
+        <button id="cancel-checkin-btn" type="button" class="px-4 py-3 rounded-xl text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition">Cancel</button>
+        <button id="save-checkin-btn" type="button" class="flex-1 sm:flex-none px-6 py-3 rounded-xl text-sm font-extrabold bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-400 hover:to-cyan-300 text-slate-950 shadow-lg shadow-sky-500/25 flex items-center justify-center gap-2 active:scale-[0.98] transition">
+          <i data-lucide="cloud-upload" class="w-4 h-4"></i>
+          <span>Save Check-In &amp; Sync</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN APPLICATION LAYOUT                                                   -->
+  <!-- ========================================================================= -->
+  <div class="flex min-h-screen">
+
+    <!-- Desktop Sidebar -->
+    <aside class="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 bg-slate-900/95 border-r border-slate-800/90 z-30">
+      <!-- Brand -->
+      <div class="p-6 border-b border-slate-800/80">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-slate-950 shadow-lg shadow-sky-500/25 shrink-0">
+            <i data-lucide="rocket" class="w-5 h-5"></i>
+          </div>
+          <div class="min-w-0">
+            <h1 class="font-extrabold text-base tracking-tight text-white truncate">JEE Main 2027</h1>
+            <p class="text-xs font-semibold text-sky-400">Command Center</p>
+          </div>
+        </div>
+
+        <!-- Cloud Sync Status Pill -->
+        <div class="mt-4 px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-2.5 text-xs font-semibold text-slate-300">
+          <span id="desktop-sync-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+          <span id="desktop-sync-text" class="truncate">Connecting Cloud...</span>
+        </div>
+      </div>
+
+      <!-- Desktop Navigation Tabs -->
+      <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+        <button data-tab="dashboard" class="nav-btn-desktop w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          <span>Dashboard &amp; 59-Day Plan</span>
+        </button>
+        <button data-tab="syllabus" class="nav-btn-desktop w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition">
+          <i data-lucide="list-checks" class="w-5 h-5"></i>
+          <span>Syllabus Checklist (55)</span>
+        </button>
+        <button data-tab="sync" class="nav-btn-desktop w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition">
+          <i data-lucide="bell-ring" class="w-5 h-5"></i>
+          <span>Sync &amp; Daily Reminders</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer Countdown Card -->
+      <div class="p-4 border-t border-slate-800/80 space-y-3">
+        <div class="p-4 rounded-2xl bg-gradient-to-br from-sky-500/15 to-blue-600/10 border border-sky-500/25">
+          <div class="flex items-center justify-between text-xs text-slate-300">
+            <span class="font-semibold">JEE Main Exam</span>
+            <span class="font-bold text-sky-400">Jan 22, 2027</span>
+          </div>
+          <div class="mt-1.5 flex items-baseline gap-1.5">
+            <span id="sidebar-days-left" class="text-3xl font-black text-white">--</span>
+            <span class="text-xs font-medium text-slate-400">days left</span>
+          </div>
+          <div class="mt-2 pt-2 border-t border-sky-500/15 flex items-center justify-between text-[11px] text-slate-400">
+            <span>14-Day Buffer Starts</span>
+            <span class="font-bold text-emerald-400">Jan 8, 2027</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Right Column -->
+    <div class="flex-1 lg:pl-72 flex flex-col min-w-0">
+
+      <!-- Sticky Top Bar (Desktop & Mobile) with Prominent End-of-Day Check-In CTA -->
+      <header class="sticky top-0 z-30 bg-slate-950/85 backdrop-blur-lg border-b border-slate-800/90 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+        <!-- Mobile Brand / Desktop Page Title -->
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="lg:hidden w-9 h-9 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-slate-950 shadow-md shadow-sky-500/20 shrink-0">
+            <i data-lucide="rocket" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0">
+            <h2 id="topbar-title" class="text-sm sm:text-base lg:text-lg font-extrabold text-white truncate">Dashboard</h2>
+            <div class="flex items-center gap-1.5 lg:hidden">
+              <span id="mobile-sync-dot" class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+              <span id="mobile-sync-text" class="text-[11px] font-medium text-slate-400 truncate">Syncing...</span>
+            </div>
+            <p class="hidden lg:block text-xs text-slate-400 truncate">Nov 24, 2026 → Jan 21, 2027 • 45-Day Syllabus + 14-Day Pre-Exam Buffer</p>
+          </div>
+        </div>
+
+        <!-- Top Bar Right Controls -->
+        <div class="flex items-center gap-2 shrink-0">
+          <!-- PWA Install Button (Appears automatically on supported Android Chrome) -->
+          <button id="pwa-install-top-btn" class="hidden items-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-400 text-xs font-bold active:scale-95 transition">
+            <i data-lucide="smartphone" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Install App</span>
+          </button>
+
+          <!-- PROMINENT END-OF-DAY CHECK-IN BUTTON -->
+          <button id="open-checkin-btn" class="px-3.5 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-400 hover:to-cyan-300 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-sky-500/25 flex items-center gap-2 active:scale-95 transition">
+            <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i>
+            <span>End-of-Day Check-In</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Scrollable Viewport -->
+      <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 pb-28 lg:pb-12">
+
+        <!-- =================================================================== -->
+        <!-- TAB 1: MAIN DASHBOARD VIEW                                          -->
+        <!-- =================================================================== -->
+        <section id="view-dashboard" class="app-view space-y-6">
+
+          <!-- 1. Dual Live Countdown Banners -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="p-5 rounded-2xl bg-gradient-to-br from-sky-500/20 via-blue-600/15 to-slate-900 border border-sky-500/30 shadow-lg shadow-sky-950/30 flex items-center justify-between gap-4">
+              <div>
+                <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-sky-300">
+                  <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
+                  JEE Main Exam Countdown
+                </span>
+                <div class="mt-2 flex items-baseline gap-2">
+                  <span id="countdown-exam" class="text-4xl font-black tracking-tight text-white">--</span>
+                  <span class="text-sm font-semibold text-sky-200">days remaining</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-300">Exam Start: <strong class="text-white">January 22, 2027</strong></p>
+              </div>
+              <div class="w-14 h-14 rounded-2xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300 shrink-0">
+                <i data-lucide="calendar-clock" class="w-7 h-7"></i>
+              </div>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm flex items-center justify-between gap-4">
+              <div>
+                <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-400">
+                  <i data-lucide="target" class="w-4 h-4"></i>
+                  Syllabus Completion Deadline
+                </span>
+                <div class="mt-2 flex items-baseline gap-2">
+                  <span id="countdown-syllabus" class="text-4xl font-black tracking-tight text-white">--</span>
+                  <span class="text-sm font-semibold text-slate-400">days left</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-400">Finish by <strong class="text-emerald-400">Jan 7, 2027</strong> (Preserves 14-day mock buffer)</p>
+              </div>
+              <div class="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shrink-0">
+                <i data-lucide="shield-check" class="w-7 h-7"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Live KPI Progress Cards -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800">
+              <div class="flex items-center justify-between text-slate-400">
+                <span class="text-xs font-semibold">Overall Completion</span>
+                <i data-lucide="pie-chart" class="w-4 h-4 text-sky-400"></i>
+              </div>
+              <div id="kpi-overall-pct" class="mt-2 text-2xl sm:text-3xl font-black text-white">0%</div>
+              <p id="kpi-overall-sub" class="mt-1 text-xs text-slate-400">0 / 177 daily targets</p>
+            </div>
+
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800">
+              <div class="flex items-center justify-between text-slate-400">
+                <span class="text-xs font-semibold">Chapters Mastered</span>
+                <i data-lucide="book-open-check" class="w-4 h-4 text-emerald-400"></i>
+              </div>
+              <div id="kpi-mastered" class="mt-2 text-2xl sm:text-3xl font-black text-white">0 / 55</div>
+              <p id="kpi-mastered-sub" class="mt-1 text-xs text-slate-400">0% syllabus checkpoints</p>
+            </div>
+
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800">
+              <div class="flex items-center justify-between text-slate-400">
+                <span class="text-xs font-semibold">Study Streak</span>
+                <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
+              </div>
+              <div id="kpi-streak" class="mt-2 text-2xl sm:text-3xl font-black text-white">0 Days</div>
+              <p id="kpi-streak-sub" class="mt-1 text-xs text-slate-400">Consecutive active days</p>
+            </div>
+
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800">
+              <div class="flex items-center justify-between text-slate-400">
+                <span class="text-xs font-semibold">Total PYQs Logged</span>
+                <i data-lucide="zap" class="w-4 h-4 text-cyan-400"></i>
+              </div>
+              <div id="kpi-pyqs" class="mt-2 text-2xl sm:text-3xl font-black text-white">0</div>
+              <p id="kpi-mock-avg" class="mt-1 text-xs text-slate-400">Avg Mock: -- / 300</p>
+            </div>
+          </div>
+
+          <!-- 3. TODAY'S MISSION PANEL -->
+          <div class="p-5 rounded-2xl bg-slate-900 border border-sky-500/30 shadow-lg shadow-sky-950/20 space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3.5 border-b border-slate-800">
+              <div class="flex items-center gap-3">
+                <div class="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 shrink-0">
+                  <i data-lucide="crosshair" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-base sm:text-lg font-extrabold text-white">Today's Mission</h3>
+                    <span id="mission-day-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/20 text-sky-300">Day 1 / 59</span>
+                    <span id="mission-week-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-300">Week 1</span>
+                  </div>
+                  <p id="mission-date-text" class="text-xs sm:text-sm text-slate-400 font-medium mt-0.5">Tue, Nov 24, 2026</p>
+                </div>
+              </div>
+
+              <!-- Prev / Today / Next Controls -->
+              <div class="flex items-center gap-2">
+                <button id="mission-prev-btn" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1 active:scale-95 transition">
+                  <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                  <span>Prev</span>
+                </button>
+                <button id="mission-today-btn" class="px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-sky-300 text-xs font-bold active:scale-95 transition">
+                  Today
+                </button>
+                <button id="mission-next-btn" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1 active:scale-95 transition">
+                  <span>Next</span>
+                  <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Today's 3 Subject Cards (One-Tap Status Toggles) -->
+            <div id="mission-cards-grid" class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Mission Footer Summary -->
+            <div class="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div class="flex items-center gap-3 flex-wrap">
+                <span class="text-slate-400">Day Status: <strong id="mission-overall-status" class="ml-1 px-2 py-0.5 rounded-full border">Pending</strong></span>
+                <span id="mission-pyq-chip" class="text-cyan-400 font-semibold">PYQs: 0</span>
+                <span id="mission-mock-chip" class="hidden text-amber-400 font-semibold">Mock: --/300</span>
+              </div>
+              <button id="mission-checkin-link" class="text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 transition">
+                <span>Log PYQs &amp; End-of-Day Check-In</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. Subject Progress Bars + Chart.js Stacked Bar Chart -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <!-- Subject-Wise Syllabus Progress Bars -->
+            <div class="lg:col-span-6 p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-base font-bold text-white">Subject Mastery Progress</h3>
+                  <p class="text-xs text-slate-400">Theory, PYQs &amp; Revision ticks across all 55 syllabus items</p>
+                </div>
+                <i data-lucide="bar-chart-2" class="w-5 h-5 text-sky-400"></i>
+              </div>
+              <div id="subject-progress-bars" class="space-y-4 pt-1">
+                <!-- Dynamically rendered for Maths, Physics, POC, IOC, OC -->
+              </div>
+            </div>
+
+            <!-- Chart.js Stacked Bar Chart -->
+            <div class="lg:col-span-6 p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-base font-bold text-white">59-Day Schedule Progress by Subject</h3>
+                  <p class="text-xs text-slate-400">Completed vs In Progress vs Pending daily targets</p>
+                </div>
+                <i data-lucide="trending-up" class="w-5 h-5 text-emerald-400"></i>
+              </div>
+              <div class="relative flex-1 min-h-[240px] w-full">
+                <canvas id="schedule-stacked-chart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. FULL 59-DAY DAY-TO-DAY CHAPTER BREAKDOWN (Directly on Dashboard) -->
+          <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
+                  <i data-lucide="calendar-range" class="w-5 h-5 text-sky-400"></i>
+                  Full 59-Day Chapter Breakdown
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Nov 24, 2026 – Jan 21, 2027 • Tap any Maths, Physics, or Chemistry pill to update status live.</p>
+              </div>
+              <span id="breakdown-count-badge" class="px-3 py-1 rounded-xl bg-slate-800 text-sky-300 text-xs font-bold self-start sm:self-auto">Showing 59 Days</span>
+            </div>
+
+            <!-- Week Filter Chips + Search -->
+            <div class="space-y-3">
+              <div id="week-filter-chips" class="flex items-center gap-2 overflow-x-auto pb-1">
+                <button data-week="ALL" class="week-chip px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition">All (59d)</button>
+                <button data-week="Week 1" class="week-chip px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition">Week 1</button>
+                <button data-week="Week 2" class="week-chip px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition">Week 2</button>
+                <button data-week="Week 3" class="week-chip px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition">Week 3</button>
+                <button data-week="Week 4" class="week-chip px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition">Week 4</button>
+                <button data-week="Week 5" class="week-chip px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition">Week 5</button>
+                <button data-week="Week 6" class="week-chip px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition">Week 6</button>
+                <button data-week="Phase 2 Buffer" class="week-chip px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition">Phase 2 Buffer (14d)</button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div class="relative sm:col-span-2">
+                  <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                  <input id="breakdown-search" type="text" placeholder="Filter by chapter name, unit, or date (e.g. Electrostatics, Dec 10)..." class="w-full pl-10 pr-3 py-2.5 rounded-xl text-sm bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+                </div>
+                <select id="breakdown-status-filter" class="px-3 py-2.5 rounded-xl text-sm font-semibold bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                  <option value="ALL">All Day Statuses</option>
+                  <option value="Completed">Completed Days</option>
+                  <option value="In Progress">In Progress Days</option>
+                  <option value="Pending">Pending Days</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 59-Day Breakdown Cards/Table Container -->
+            <div id="breakdown-list-container" class="space-y-3">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 2: DEDICATED SYLLABUS CHECKLIST VIEW (55 ITEMS)                 -->
+        <!-- =================================================================== -->
+        <section id="view-syllabus" class="app-view hidden space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">Syllabus Checklist</h2>
+              <p class="text-sm text-slate-400">All 55 items across Maths (14), Physics (20), POC (8), IOC (5), and OC (8).</p>
+            </div>
+            <span id="syllabus-mastered-pill" class="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 text-xs font-bold self-start sm:self-auto">0 / 55 Mastered</span>
+          </div>
+
+          <!-- Subject Filter Chips & Search -->
+          <div class="space-y-3">
+            <div id="syllabus-filter-chips" class="flex items-center gap-2 overflow-x-auto pb-1">
+              <button data-subj="ALL" class="syl-chip px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition">All (55)</button>
+              <button data-subj="Mathematics" class="syl-chip px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition">Maths (14)</button>
+              <button data-subj="Physics" class="syl-chip px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition">Physics (20)</button>
+              <button data-subj="POC" class="syl-chip px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition">POC (8)</button>
+              <button data-subj="IOC" class="syl-chip px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition">IOC (5)</button>
+              <button data-subj="OC" class="syl-chip px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition">OC (8)</button>
+            </div>
+
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+              <input id="syllabus-search-input" type="text" placeholder="Search chapter name, unit number, or target date..." class="w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            </div>
+          </div>
+
+          <!-- Syllabus Items List -->
+          <div id="syllabus-list-container" class="space-y-2.5">
+            <!-- Dynamically rendered -->
+          </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 3: SYNC & DAILY REMINDERS VIEW                                  -->
+        <!-- =================================================================== -->
+        <section id="view-sync" class="app-view hidden space-y-6">
+          <div>
+            <h2 class="text-2xl font-extrabold text-white tracking-tight">Sync &amp; Daily Reminders</h2>
+            <p class="text-sm text-slate-400">Mirror progress between your Android phone and laptop in real time, and set up automated daily alerts.</p>
+          </div>
+
+          <!-- 1. Real-Time Phone ↔ Laptop Cloud Sync Room -->
+          <div class="p-5 sm:p-6 rounded-2xl bg-slate-900 border border-sky-500/30 shadow-lg shadow-sky-950/20 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="p-2.5 rounded-xl bg-sky-500/15 text-sky-400">
+                  <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <h3 class="text-base font-extrabold text-white">Real-Time Cross-Device Sync Room</h3>
+                  <p class="text-xs text-slate-400">Enter the same Sync Room ID on both your phone and laptop to sync instantaneously.</p>
+                </div>
+              </div>
+              <span id="sync-mode-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-sky-300 self-start sm:self-auto">Private Session</span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2.5">
+              <input id="sync-room-input" type="text" placeholder="e.g. my-jee-2027-room" class="flex-1 px-4 py-3 rounded-xl text-sm font-mono font-semibold bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              <button id="join-room-btn" class="px-5 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs sm:text-sm active:scale-95 transition">Connect Sync Room</button>
+              <button id="gen-room-btn" class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm active:scale-95 transition">Generate ID</button>
+              <button id="leave-room-btn" class="hidden px-4 py-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold text-xs sm:text-sm active:scale-95 transition">Disconnect</button>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div class="min-w-0">
+                <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Current Authenticated Device User ID</span>
+                <code id="full-user-id" class="text-xs font-mono text-slate-300 break-all">Authenticating...</code>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button id="copy-room-btn" class="hidden px-3 py-2 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 text-xs font-bold items-center gap-1.5 transition">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  <span>Copy Room ID</span>
+                </button>
+                <button id="copy-uid-btn" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  <span>Copy User ID</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. One-Click 59-Day Android Calendar Alarms (.ics) Hero Card -->
+          <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-sky-600 via-blue-700 to-slate-900 border border-sky-400/40 shadow-xl shadow-sky-950/40">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+              <div class="space-y-2 max-w-2xl">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-slate-950/40 text-sky-200 border border-sky-300/25">
+                  <i data-lucide="alarm-clock-check" class="w-3.5 h-3.5"></i>
+                  118 Native Lock-Screen Alarms (59 Morning + 59 Evening)
+                </span>
+                <h3 class="text-xl font-extrabold text-white tracking-tight">One-Click 59-Day Android Calendar Alarms (.ics)</h3>
+                <p class="text-sm text-sky-100/90 leading-relaxed">
+                  Import this file directly into <strong>Google Calendar on Android</strong> for guaranteed offline lock-screen alerts every day from Nov 24 to Jan 21—morning briefings listing that day's exact Maths, Physics &amp; Chemistry chapters plus evening End-of-Day Check-In reminders.
+                </p>
+              </div>
+              <button id="download-ics-btn" class="w-full lg:w-auto px-5 py-4 rounded-xl bg-white hover:bg-sky-50 text-slate-950 font-extrabold text-sm shadow-xl flex items-center justify-center gap-2.5 shrink-0 active:scale-95 transition">
+                <i data-lucide="calendar-plus" class="w-5 h-5 text-sky-600"></i>
+                <span>Export 118 Android Alerts (.ics)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. Reminder Time Pickers + Push Alerts & Native Android Install Guide -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+            <!-- Morning & Evening Reminder Controls -->
+            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <i data-lucide="bell-ring" class="w-5 h-5 text-sky-400"></i>
+                  Daily Alert Schedule &amp; Push
+                </h3>
+                <span id="push-status-pill" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300">Checking...</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <label for="morning-time-input" class="block text-xs font-bold text-sky-400 mb-1.5">Morning Briefing Time</label>
+                  <input id="morning-time-input" type="time" value="07:00" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-base focus:outline-none focus:ring-2 focus:ring-sky-500" />
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <label for="evening-time-input" class="block text-xs font-bold text-emerald-400 mb-1.5">End-of-Day Check-In Time</label>
+                  <input id="evening-time-input" type="time" value="21:30" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-base focus:outline-none focus:ring-2 focus:ring-sky-500" />
+                </div>
+              </div>
+
+              <div class="flex flex-col sm:flex-row gap-2.5">
+                <button id="enable-push-btn" class="flex-1 px-4 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 active:scale-95 transition">
+                  <i data-lucide="bell" class="w-4 h-4"></i>
+                  <span>Enable Push Notifications</span>
+                </button>
+                <button id="test-alert-btn" class="flex-1 px-4 py-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 active:scale-95 transition">
+                  <i data-lucide="send" class="w-4 h-4"></i>
+                  <span>Test Today's Alert</span>
+                </button>
+              </div>
+
+              <!-- Live Alert Preview -->
+              <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1.5">
+                <div class="font-bold text-sky-400 flex items-center gap-1.5">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                  Today's Automated Alert Preview
+                </div>
+                <div id="alert-preview-box" class="text-slate-300 leading-relaxed"></div>
+              </div>
+            </div>
+
+            <!-- Install as Native Android App + JSON Backup -->
+            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between space-y-5">
+              <div class="space-y-3.5">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <i data-lucide="smartphone" class="w-5 h-5 text-sky-400"></i>
+                  Access on Phone Without Browser Bar
+                </h3>
+
+                <button id="pwa-install-card-btn" class="hidden w-full px-4 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-sm items-center justify-center gap-2 shadow-md shadow-sky-500/20 active:scale-95 transition">
+                  <i data-lucide="download-cloud" class="w-4 h-4"></i>
+                  <span>Install Native Web App Now</span>
+                </button>
+
+                <ol class="space-y-2.5 text-sm text-slate-300">
+                  <li class="flex items-start gap-2.5">
+                    <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
+                    <span>Open this site in <strong>Chrome on Android</strong> and tap the <strong>⋮ menu</strong>.</span>
+                  </li>
+                  <li class="flex items-start gap-2.5">
+                    <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
+                    <span>Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>—it launches fullscreen like a native Android app.</span>
+                  </li>
+                  <li class="flex items-start gap-2.5">
+                    <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
+                    <span>Enter the same <strong>Sync Room ID</strong> on both phone &amp; laptop, and import the <strong>.ics file</strong> for 118 native alarms.</span>
+                  </li>
+                </ol>
+              </div>
+
+              <!-- Backup Export / Import -->
+              <div class="pt-4 border-t border-slate-800 flex flex-wrap items-center gap-2.5">
+                <button id="export-json-btn" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2 active:scale-95 transition">
+                  <i data-lucide="download" class="w-4 h-4 text-sky-400"></i>
+                  <span>Export JSON Backup</span>
+                </button>
+                <label for="import-json-input" class="cursor-pointer px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2 active:scale-95 transition">
+                  <i data-lucide="upload" class="w-4 h-4 text-emerald-400"></i>
+                  <span>Import JSON Backup</span>
+                  <input id="import-json-input" type="file" accept=".json,application/json" class="hidden" />
+                </label>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Navigation Bar (Native App Feel) -->
+  <nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-lg border-t border-slate-800 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <div class="grid grid-cols-3 h-16 max-w-lg mx-auto px-2">
+      <button data-tab="dashboard" class="nav-btn-mobile flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        <span>Dashboard</span>
+      </button>
+      <button data-tab="syllabus" class="nav-btn-mobile flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition">
+        <i data-lucide="list-checks" class="w-5 h-5"></i>
+        <span>Syllabus (55)</span>
+      </button>
+      <button data-tab="sync" class="nav-btn-mobile flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition">
+        <i data-lucide="bell-ring" class="w-5 h-5"></i>
+        <span>Sync &amp; Alerts</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ========================================================================= -->
+  <!-- APPLICATION LOGIC + FIREBASE FIRESTORE REAL-TIME SYNC                     -->
+  <!-- ========================================================================= -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    /* -------------------------------------------------------------------------
+       1. EXACT 59-DAY SCHEDULE (NOV 24, 2026 – JAN 21, 2027) WITH SYLLABUS LINKS
+       ------------------------------------------------------------------------- */
+    const SCHEDULE_DATA = [
+      // Week 1: Nov 24 – Nov 30
+      { dayNum: 1, date: "2026-11-24", dow: "Tue", week: "Week 1", maths: "Sets, Relations & Functions", physics: "Units & Measurements + Experimental Skills", chem: "POC: Some Basic Concepts in Chemistry", links: { maths: ["math-1"], physics: ["phy-1", "phy-20"], chem: ["poc-1"] } },
+      { dayNum: 2, date: "2026-11-25", dow: "Wed", week: "Week 1", maths: "Quadratic Equations & Complex Numbers", physics: "Kinematics (1D & 2D)", chem: "POC: Atomic Structure", links: { maths: ["math-2"], physics: ["phy-2"], chem: ["poc-2"] } },
+      { dayNum: 3, date: "2026-11-26", dow: "Thu", week: "Week 1", maths: "Matrices & Determinants", physics: "Laws of Motion", chem: "IOC: Classification of Elements & Periodicity", links: { maths: ["math-3"], physics: ["phy-3"], chem: ["ioc-9"] } },
+      { dayNum: 4, date: "2026-11-27", dow: "Fri", week: "Week 1", maths: "Matrices & Determinants (Contd.)", physics: "Work, Energy & Power", chem: "IOC/POC: Chemical Bonding & Molecular Structure", links: { maths: ["math-3"], physics: ["phy-4"], chem: ["poc-3"] } },
+      { dayNum: 5, date: "2026-11-28", dow: "Sat", week: "Week 1", maths: "Sequence & Series", physics: "Rotational Motion (Part 1: COM & Torque)", chem: "OC: Purification & Characterisation + GOC (Part 1)", links: { maths: ["math-6"], physics: ["phy-5"], chem: ["oc-13", "oc-14"] } },
+      { dayNum: 6, date: "2026-11-29", dow: "Sun", week: "Week 1", maths: "Weekly Revision + Backlog Clearance", physics: "Weekly Revision + 1 Part-Test", chem: "NCERT Revision (Units 1–3, 9, 13–14)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 7, date: "2026-11-30", dow: "Mon", week: "Week 1", maths: "Permutations & Combinations", physics: "Rotational Motion (Part 2: MOI & Rolling)", chem: "OC: Some Basic Principles of Organic Chemistry (GOC Part 2)", links: { maths: ["math-4"], physics: ["phy-5"], chem: ["oc-14"] } },
+      // Week 2: Dec 1 – Dec 7
+      { dayNum: 8, date: "2026-12-01", dow: "Tue", week: "Week 2", maths: "Binomial Theorem", physics: "Gravitation", chem: "POC: Chemical Thermodynamics", links: { maths: ["math-5"], physics: ["phy-6"], chem: ["poc-4"] } },
+      { dayNum: 9, date: "2026-12-02", dow: "Wed", week: "Week 2", maths: "Trigonometry & Inverse Trig Functions", physics: "Properties of Solids & Liquids (Solids/Fluids)", chem: "POC: Solutions", links: { maths: ["math-14"], physics: ["phy-7"], chem: ["poc-5"] } },
+      { dayNum: 10, date: "2026-12-03", dow: "Thu", week: "Week 2", maths: "Limit, Continuity & Differentiability", physics: "Properties of Solids & Liquids (Thermal/Heat)", chem: "IOC: p-Block Elements (Group 13 & 14)", links: { maths: ["math-7"], physics: ["phy-7"], chem: ["ioc-10"] } },
+      { dayNum: 11, date: "2026-12-04", dow: "Fri", week: "Week 2", maths: "Differentiation & Applications (AOD - Part 1)", physics: "Thermodynamics", chem: "IOC: p-Block Elements (Group 15 to 18)", links: { maths: ["math-7"], physics: ["phy-8"], chem: ["ioc-10"] } },
+      { dayNum: 12, date: "2026-12-05", dow: "Sat", week: "Week 2", maths: "Applications of Derivatives (AOD - Part 2)", physics: "Kinetic Theory of Gases (KTG)", chem: "OC: Hydrocarbons (Alkanes & Alkenes)", links: { maths: ["math-7"], physics: ["phy-9"], chem: ["oc-15"] } },
+      { dayNum: 13, date: "2026-12-06", dow: "Sun", week: "Week 2", maths: "Weekly Revision + Backlog Clearance", physics: "Weekly Revision + 1 Part-Test", chem: "NCERT Revision (Units 4–5, 10, 15)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 14, date: "2026-12-07", dow: "Mon", week: "Week 2", maths: "Indefinite Integration", physics: "Oscillations (SHM)", chem: "OC: Hydrocarbons (Alkynes & Aromatic)", links: { maths: ["math-8"], physics: ["phy-10"], chem: ["oc-15"] } },
+      // Week 3: Dec 8 – Dec 14
+      { dayNum: 15, date: "2026-12-08", dow: "Tue", week: "Week 3", maths: "Definite Integration & Properties", physics: "Waves & Sound", chem: "POC: Equilibrium (Chemical Equilibrium)", links: { maths: ["math-8"], physics: ["phy-10"], chem: ["poc-6"] } },
+      { dayNum: 16, date: "2026-12-09", dow: "Wed", week: "Week 3", maths: "Area Under Curves", physics: "Electrostatics (Coulomb's Law, Field & Gauss)", chem: "POC: Equilibrium (Ionic Equilibrium)", links: { maths: ["math-8"], physics: ["phy-11"], chem: ["poc-6"] } },
+      { dayNum: 17, date: "2026-12-10", dow: "Thu", week: "Week 3", maths: "Differential Equations", physics: "Electrostatics (Potential & Capacitors)", chem: "IOC: d- and f-Block Elements", links: { maths: ["math-9"], physics: ["phy-11"], chem: ["ioc-11"] } },
+      { dayNum: 18, date: "2026-12-11", dow: "Fri", week: "Week 3", maths: "Straight Lines", physics: "Current Electricity (Circuits & Kirchhoff)", chem: "IOC: Coordination Compounds (Part 1)", links: { maths: ["math-10"], physics: ["phy-12"], chem: ["ioc-12"] } },
+      { dayNum: 19, date: "2026-12-12", dow: "Sat", week: "Week 3", maths: "Circles", physics: "Current Electricity (Instruments & Bridges)", chem: "IOC: Coordination Compounds (Part 2)", links: { maths: ["math-10"], physics: ["phy-12"], chem: ["ioc-12"] } },
+      { dayNum: 20, date: "2026-12-13", dow: "Sun", week: "Week 3", maths: "Weekly Revision + Backlog Clearance", physics: "Weekly Revision + 1 Part-Test", chem: "NCERT Revision (Units 6, 11–12)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 21, date: "2026-12-14", dow: "Mon", week: "Week 3", maths: "Conic Sections: Parabola", physics: "Magnetic Effects of Current (Biot-Savart & Ampere)", chem: "OC: Organic Compounds Containing Halogens", links: { maths: ["math-10"], physics: ["phy-13"], chem: ["oc-16"] } },
+      // Week 4: Dec 15 – Dec 21
+      { dayNum: 22, date: "2026-12-15", dow: "Tue", week: "Week 4", maths: "Conic Sections: Ellipse & Hyperbola", physics: "Magnetism & Matter", chem: "POC: Redox Reactions & Electrochemistry (Part 1)", links: { maths: ["math-10"], physics: ["phy-13"], chem: ["poc-7"] } },
+      { dayNum: 23, date: "2026-12-16", dow: "Wed", week: "Week 4", maths: "Vector Algebra (Part 1)", physics: "Electromagnetic Induction (EMI)", chem: "POC: Electrochemistry (Part 2)", links: { maths: ["math-12"], physics: ["phy-14"], chem: ["poc-7"] } },
+      { dayNum: 24, date: "2026-12-17", dow: "Thu", week: "Week 4", maths: "Vector Algebra (Part 2)", physics: "Alternating Current (AC)", chem: "OC: Alcohols, Phenols & Ethers (Part 1)", links: { maths: ["math-12"], physics: ["phy-14"], chem: ["oc-17"] } },
+      { dayNum: 25, date: "2026-12-18", dow: "Fri", week: "Week 4", maths: "Three-Dimensional Geometry (Lines & Angles)", physics: "Electromagnetic Waves", chem: "OC: Alcohols, Phenols & Ethers (Part 2)", links: { maths: ["math-11"], physics: ["phy-15"], chem: ["oc-17"] } },
+      { dayNum: 26, date: "2026-12-19", dow: "Sat", week: "Week 4", maths: "Three-Dimensional Geometry (Skew Lines & Distance)", physics: "Ray Optics (Reflection & Refraction)", chem: "OC: Aldehydes & Ketones", links: { maths: ["math-11"], physics: ["phy-16"], chem: ["oc-17"] } },
+      { dayNum: 27, date: "2026-12-20", dow: "Sun", week: "Week 4", maths: "Weekly Revision + Backlog Clearance", physics: "Weekly Revision + 1 Full-Length Mock", chem: "NCERT Revision (Units 7, 16–17)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 28, date: "2026-12-21", dow: "Mon", week: "Week 4", maths: "Statistics", physics: "Ray Optics (Prisms & Optical Instruments)", chem: "OC: Carboxylic Acids", links: { maths: ["math-13"], physics: ["phy-16"], chem: ["oc-17"] } },
+      // Week 5: Dec 22 – Dec 28
+      { dayNum: 29, date: "2026-12-22", dow: "Tue", week: "Week 5", maths: "Probability (Conditional & Bayes' Theorem)", physics: "Wave Optics (Interference & YDSE)", chem: "POC: Chemical Kinetics (Part 1)", links: { maths: ["math-13"], physics: ["phy-16"], chem: ["poc-8"] } },
+      { dayNum: 30, date: "2026-12-23", dow: "Wed", week: "Week 5", maths: "Probability (Distributions)", physics: "Wave Optics (Diffraction & Polarization)", chem: "POC: Chemical Kinetics (Part 2)", links: { maths: ["math-13"], physics: ["phy-16"], chem: ["poc-8"] } },
+      { dayNum: 31, date: "2026-12-24", dow: "Thu", week: "Week 5", maths: "Maths Consolidation: Calculus Mixed PYQs", physics: "Dual Nature of Matter & Radiation", chem: "OC: Organic Compounds Containing Nitrogen (Amines)", links: { maths: ["math-7", "math-8"], physics: ["phy-17"], chem: ["oc-18"] } },
+      { dayNum: 32, date: "2026-12-25", dow: "Fri", week: "Week 5", maths: "Maths Consolidation: Coordinate Geometry PYQs", physics: "Atoms", chem: "OC: Diazonium Salts & Biomolecules (Part 1)", links: { maths: ["math-10"], physics: ["phy-18"], chem: ["oc-18", "oc-19"] } },
+      { dayNum: 33, date: "2026-12-26", dow: "Sat", week: "Week 5", maths: "Maths Consolidation: Vectors & 3D PYQs", physics: "Nuclei", chem: "OC: Biomolecules (Part 2)", links: { maths: ["math-11", "math-12"], physics: ["phy-18"], chem: ["oc-19"] } },
+      { dayNum: 34, date: "2026-12-27", dow: "Sun", week: "Week 5", maths: "Weekly Revision + Backlog Clearance", physics: "Weekly Revision + 1 Full-Length Mock", chem: "NCERT Revision (Units 8, 18–19)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 35, date: "2026-12-28", dow: "Mon", week: "Week 5", maths: "Maths Consolidation: Algebra Mixed PYQs", physics: "Electronic Devices (Semiconductors & Logic Gates)", chem: "IOC/OC: Practical Chemistry (Salt Analysis & Organic Tests)", links: { maths: [], physics: ["phy-19"], chem: ["ioc-20", "oc-20"] } },
+      // Week 6: Dec 29 – Jan 7
+      { dayNum: 36, date: "2026-12-29", dow: "Tue", week: "Week 6", maths: "Dedicated Buffer Day: Spilled-over Maths Topics", physics: "Dedicated Buffer Day: Spilled-over Physics Topics", chem: "Dedicated Buffer Day: Spilled-over Chemistry Topics", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 37, date: "2026-12-30", dow: "Wed", week: "Week 6", maths: "Dedicated Buffer Day: Spilled-over Maths Topics", physics: "Dedicated Buffer Day: Spilled-over Physics Topics", chem: "Dedicated Buffer Day: Spilled-over Chemistry Topics", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 38, date: "2026-12-31", dow: "Thu", week: "Week 6", maths: "Dedicated Buffer Day: Final Syllabus Lock-in", physics: "Dedicated Buffer Day: Final Syllabus Lock-in", chem: "Dedicated Buffer Day: Final Syllabus Lock-in", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 39, date: "2027-01-01", dow: "Fri", week: "Week 6", maths: "Top 50 NTA 2025/2026 PYQs (Algebra & Calculus)", physics: "Rapid Formula Sweep + Top 50 NTA PYQs", chem: "NCERT Highlighted Lines Sweep (IOC)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 40, date: "2027-01-02", dow: "Sat", week: "Week 6", maths: "Top 50 NTA 2025/2026 PYQs (Conics & Vectors/3D)", physics: "Rapid Formula Sweep + Top 50 NTA PYQs", chem: "NCERT Highlighted Lines Sweep (OC)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 41, date: "2027-01-03", dow: "Sun", week: "Week 6", maths: "Weak Chapter Drill & Formula Sheet Review", physics: "Weak Chapter Drill & Formula Sheet Review", chem: "Physical Chemistry Formula & Numerical Sweep", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 42, date: "2027-01-04", dow: "Mon", week: "Week 6", maths: "Full-Length Mock Test #1 (Exam Shift Timing)", physics: "Full-Length Mock Test #1 (Exam Shift Timing)", chem: "Full-Length Mock Test #1 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 43, date: "2027-01-05", dow: "Tue", week: "Week 6", maths: "Mock #1 Deep Error-Log Analysis (Maths)", physics: "Mock #1 Deep Error-Log Analysis (Physics)", chem: "Mock #1 Deep Error-Log Analysis (Chemistry)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 44, date: "2027-01-06", dow: "Wed", week: "Week 6", maths: "Full-Length Mock Test #2 (Exam Shift Timing)", physics: "Full-Length Mock Test #2 (Exam Shift Timing)", chem: "Full-Length Mock Test #2 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 45, date: "2027-01-07", dow: "Thu", week: "Week 6", maths: "Mock #2 Deep Error-Log Analysis (Maths)", physics: "Mock #2 Deep Error-Log Analysis (Physics)", chem: "Mock #2 Deep Error-Log Analysis (Chemistry)", links: { maths: [], physics: [], chem: [] } },
+      // Phase 2 Buffer: Jan 8 – Jan 21 (14 Days)
+      { dayNum: 46, date: "2027-01-08", dow: "Fri", week: "Phase 2 Buffer", maths: "Full-Length Mock Test #3 (Exam Shift Timing)", physics: "Full-Length Mock Test #3 (Exam Shift Timing)", chem: "Full-Length Mock Test #3 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 47, date: "2027-01-09", dow: "Sat", week: "Phase 2 Buffer", maths: "Mock #3 Error Analysis + Weak Topic Patching", physics: "Mock #3 Error Analysis + Weak Topic Patching", chem: "Mock #3 Error Analysis + Weak Topic Patching", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 48, date: "2027-01-10", dow: "Sun", week: "Phase 2 Buffer", maths: "Full-Length Mock Test #4 (Exam Shift Timing)", physics: "Full-Length Mock Test #4 (Exam Shift Timing)", chem: "Full-Length Mock Test #4 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 49, date: "2027-01-11", dow: "Mon", week: "Phase 2 Buffer", maths: "Mock #4 Error Analysis + Weak Topic Patching", physics: "Mock #4 Error Analysis + Weak Topic Patching", chem: "Mock #4 Error Analysis + Weak Topic Patching", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 50, date: "2027-01-12", dow: "Tue", week: "Phase 2 Buffer", maths: "Full-Length Mock Test #5 (Exam Shift Timing)", physics: "Full-Length Mock Test #5 (Exam Shift Timing)", chem: "Full-Length Mock Test #5 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 51, date: "2027-01-13", dow: "Wed", week: "Phase 2 Buffer", maths: "Mock #5 Error Analysis + Weak Topic Patching", physics: "Mock #5 Error Analysis + Weak Topic Patching", chem: "Mock #5 Error Analysis + Weak Topic Patching", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 52, date: "2027-01-14", dow: "Thu", week: "Phase 2 Buffer", maths: "Full-Length Mock Test #6 (Exam Shift Timing)", physics: "Full-Length Mock Test #6 (Exam Shift Timing)", chem: "Full-Length Mock Test #6 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 53, date: "2027-01-15", dow: "Fri", week: "Phase 2 Buffer", maths: "Mock #6 Error Analysis + Weak Topic Patching", physics: "Mock #6 Error Analysis + Weak Topic Patching", chem: "Mock #6 Error Analysis + Weak Topic Patching", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 54, date: "2027-01-16", dow: "Sat", week: "Phase 2 Buffer", maths: "Final Pass: Algebra & Trigonometry Short Notes", physics: "Final Pass: Mechanics & Thermodynamics Formulas", chem: "Final Pass: IOC Periodic, Bonding & p/d/f-Block Trends", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 55, date: "2027-01-17", dow: "Sun", week: "Phase 2 Buffer", maths: "Final Pass: Calculus Short Notes & Standard Integrals", physics: "Final Pass: Electrodynamics Formulas", chem: "Final Pass: Coordination Compounds & Salt Analysis", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 56, date: "2027-01-18", dow: "Mon", week: "Phase 2 Buffer", maths: "Final Pass: Coordinate Geometry & Vectors/3D Notes", physics: "Final Pass: Optics & Modern Physics Formulas", chem: "Final Pass: OC Named Reactions, Reagents & Biomolecules", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 57, date: "2027-01-19", dow: "Tue", week: "Phase 2 Buffer", maths: "Mistake Notebook Review (All Maths Traps)", physics: "Mistake Notebook Review (All Physics Traps)", chem: "Final Pass: Physical Chemistry Formulas & Graphs", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 58, date: "2027-01-20", dow: "Wed", week: "Phase 2 Buffer", maths: "Light Formula Glance Only (No Heavy Solving)", physics: "Light Formula Glance Only (No Heavy Solving)", chem: "Light NCERT Flashcard Glance Only", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 59, date: "2027-01-21", dow: "Thu", week: "Phase 2 Buffer", maths: "Rest, Sleep Cycle Alignment & Admit Card Prep", physics: "Rest, Sleep Cycle Alignment & Admit Card Prep", chem: "Rest, Sleep Cycle Alignment & Admit Card Prep", links: { maths: [], physics: [], chem: [] } }
+    ];
+
+    /* -------------------------------------------------------------------------
+       2. EXACT 55 SYLLABUS ITEMS (14 MATHS, 20 PHYSICS, 8 POC, 5 IOC, 8 OC)
+       ------------------------------------------------------------------------- */
+    const SYLLABUS_DATA = [
+      // POC (8)
+      { id: "poc-1", subject: "POC", unit: "Unit 1", name: "Some Basic Concepts in Chemistry", target: "Nov 24" },
+      { id: "poc-2", subject: "POC", unit: "Unit 2", name: "Atomic Structure", target: "Nov 25" },
+      { id: "poc-3", subject: "POC", unit: "Unit 3", name: "Chemical Bonding and Molecular Structure", target: "Nov 27" },
+      { id: "poc-4", subject: "POC", unit: "Unit 4", name: "Chemical Thermodynamics", target: "Dec 01" },
+      { id: "poc-5", subject: "POC", unit: "Unit 5", name: "Solutions", target: "Dec 02" },
+      { id: "poc-6", subject: "POC", unit: "Unit 6", name: "Equilibrium", target: "Dec 08 – Dec 09" },
+      { id: "poc-7", subject: "POC", unit: "Unit 7", name: "Redox Reactions and Electrochemistry", target: "Dec 15 – Dec 16" },
+      { id: "poc-8", subject: "POC", unit: "Unit 8", name: "Chemical Kinetics", target: "Dec 22 – Dec 23" },
+      // IOC (5)
+      { id: "ioc-9", subject: "IOC", unit: "Unit 9", name: "Classification of Elements and Periodicity in Properties", target: "Nov 26" },
+      { id: "ioc-10", subject: "IOC", unit: "Unit 10", name: "p-Block Elements (Group 13 to Group 18)", target: "Dec 03 – Dec 04" },
+      { id: "ioc-11", subject: "IOC", unit: "Unit 11", name: "d- and f-Block Elements", target: "Dec 10" },
+      { id: "ioc-12", subject: "IOC", unit: "Unit 12", name: "Coordination Compounds", target: "Dec 11 – Dec 12" },
+      { id: "ioc-20", subject: "IOC", unit: "Unit 20 (Part)", name: "Principles Related to Practical Chemistry (Inorganic Salt Analysis & Volumetric Titrations)", target: "Dec 28" },
+      // OC (8)
+      { id: "oc-13", subject: "OC", unit: "Unit 13", name: "Purification and Characterisation of Organic Compounds", target: "Nov 28" },
+      { id: "oc-14", subject: "OC", unit: "Unit 14", name: "Some Basic Principles of Organic Chemistry (GOC)", target: "Nov 28 – Nov 30" },
+      { id: "oc-15", subject: "OC", unit: "Unit 15", name: "Hydrocarbons", target: "Dec 05 – Dec 07" },
+      { id: "oc-16", subject: "OC", unit: "Unit 16", name: "Organic Compounds Containing Halogens", target: "Dec 14" },
+      { id: "oc-17", subject: "OC", unit: "Unit 17", name: "Organic Compounds Containing Oxygen (Alcohols, Phenols, Ethers, Aldehydes, Ketones, Carboxylic Acids)", target: "Dec 17 – Dec 21" },
+      { id: "oc-18", subject: "OC", unit: "Unit 18", name: "Organic Compounds Containing Nitrogen (Amines & Diazonium Salts)", target: "Dec 24 – Dec 25" },
+      { id: "oc-19", subject: "OC", unit: "Unit 19", name: "Biomolecules", target: "Dec 25 – Dec 26" },
+      { id: "oc-20", subject: "OC", unit: "Unit 20 (Part)", name: "Principles Related to Practical Chemistry (Organic Functional Group Tests & Preparations)", target: "Dec 28" },
+      // Mathematics (14)
+      { id: "math-1", subject: "Mathematics", unit: "Unit 1", name: "Sets, Relations and Functions", target: "Nov 24" },
+      { id: "math-2", subject: "Mathematics", unit: "Unit 2", name: "Complex Numbers and Quadratic Equations", target: "Nov 25" },
+      { id: "math-3", subject: "Mathematics", unit: "Unit 3", name: "Matrices and Determinants", target: "Nov 26 – Nov 27" },
+      { id: "math-4", subject: "Mathematics", unit: "Unit 4", name: "Permutations and Combinations", target: "Nov 30" },
+      { id: "math-5", subject: "Mathematics", unit: "Unit 5", name: "Binomial Theorem and its Simple Applications", target: "Dec 01" },
+      { id: "math-6", subject: "Mathematics", unit: "Unit 6", name: "Sequence and Series", target: "Nov 28" },
+      { id: "math-7", subject: "Mathematics", unit: "Unit 7", name: "Limit, Continuity and Differentiability", target: "Dec 03 – Dec 05" },
+      { id: "math-8", subject: "Mathematics", unit: "Unit 8", name: "Integral Calculus", target: "Dec 07 – Dec 09" },
+      { id: "math-9", subject: "Mathematics", unit: "Unit 9", name: "Differential Equations", target: "Dec 10" },
+      { id: "math-10", subject: "Mathematics", unit: "Unit 10", name: "Co-ordinate Geometry (Straight Lines, Circles, Conic Sections)", target: "Dec 11 – Dec 15" },
+      { id: "math-11", subject: "Mathematics", unit: "Unit 11", name: "Three Dimensional Geometry", target: "Dec 18 – Dec 19" },
+      { id: "math-12", subject: "Mathematics", unit: "Unit 12", name: "Vector Algebra", target: "Dec 16 – Dec 17" },
+      { id: "math-13", subject: "Mathematics", unit: "Unit 13", name: "Statistics and Probability", target: "Dec 21 – Dec 23" },
+      { id: "math-14", subject: "Mathematics", unit: "Unit 14", name: "Trigonometry (Identities, Functions & Inverse Trigonometric Functions)", target: "Dec 02" },
+      // Physics (20)
+      { id: "phy-1", subject: "Physics", unit: "Unit 1", name: "Units and Measurements", target: "Nov 24" },
+      { id: "phy-2", subject: "Physics", unit: "Unit 2", name: "Kinematics", target: "Nov 25" },
+      { id: "phy-3", subject: "Physics", unit: "Unit 3", name: "Laws of Motion", target: "Nov 26" },
+      { id: "phy-4", subject: "Physics", unit: "Unit 4", name: "Work, Energy and Power", target: "Nov 27" },
+      { id: "phy-5", subject: "Physics", unit: "Unit 5", name: "Rotational Motion", target: "Nov 28 – Nov 30" },
+      { id: "phy-6", subject: "Physics", unit: "Unit 6", name: "Gravitation", target: "Dec 01" },
+      { id: "phy-7", subject: "Physics", unit: "Unit 7", name: "Properties of Solids and Liquids", target: "Dec 02 – Dec 03" },
+      { id: "phy-8", subject: "Physics", unit: "Unit 8", name: "Thermodynamics", target: "Dec 04" },
+      { id: "phy-9", subject: "Physics", unit: "Unit 9", name: "Kinetic Theory of Gases", target: "Dec 05" },
+      { id: "phy-10", subject: "Physics", unit: "Unit 10", name: "Oscillations and Waves", target: "Dec 07 – Dec 08" },
+      { id: "phy-11", subject: "Physics", unit: "Unit 11", name: "Electrostatics", target: "Dec 09 – Dec 10" },
+      { id: "phy-12", subject: "Physics", unit: "Unit 12", name: "Current Electricity", target: "Dec 11 – Dec 12" },
+      { id: "phy-13", subject: "Physics", unit: "Unit 13", name: "Magnetic Effects of Current and Magnetism", target: "Dec 14 – Dec 15" },
+      { id: "phy-14", subject: "Physics", unit: "Unit 14", name: "Electromagnetic Induction and Alternating Currents", target: "Dec 16 – Dec 17" },
+      { id: "phy-15", subject: "Physics", unit: "Unit 15", name: "Electromagnetic Waves", target: "Dec 18" },
+      { id: "phy-16", subject: "Physics", unit: "Unit 16", name: "Optics (Ray Optics & Wave Optics)", target: "Dec 19 – Dec 23" },
+      { id: "phy-17", subject: "Physics", unit: "Unit 17", name: "Dual Nature of Matter and Radiation", target: "Dec 24" },
+      { id: "phy-18", subject: "Physics", unit: "Unit 18", name: "Atoms and Nuclei", target: "Dec 25 – Dec 26" },
+      { id: "phy-19", subject: "Physics", unit: "Unit 19", name: "Electronic Devices", target: "Dec 28" },
+      { id: "phy-20", subject: "Physics", unit: "Unit 20", name: "Experimental Skills", target: "Nov 24" }
+    ];
+
+    const SYLLABUS_MAP = Object.fromEntries(SYLLABUS_DATA.map((item) => [item.id, item]));
+    const STATUS_CYCLE = ["Pending", "In Progress", "Completed"];
+
+    /* -------------------------------------------------------------------------
+       3. STATE & FIREBASE RUNTIME REFERENCES
+       ------------------------------------------------------------------------- */
+    const appId = typeof __app_id !== "undefined" ? __app_id : "default-app-id";
+    let db = null;
+    let auth = null;
+    let currentUser = null;
+    let activeUnsubscribe = null;
+    let activeRoomId = "";
+    let deferredInstallPrompt = null;
+    let stackedChart = null;
+    let lastMorningNotifDate = "";
+    let lastEveningNotifDate = "";
+
+    const state = {
+      activeTab: "dashboard",
+      selectedDate: getClampedTodayDate(),
+      checkinDate: getClampedTodayDate(),
+      weekFilter: "ALL",
+      breakdownSearch: "",
+      breakdownStatus: "ALL",
+      syllabusSubject: "ALL",
+      syllabusSearch: "",
+      // Synced Cloud Data:
+      schedule: {}, // { "2026-11-24": { maths, physics, chem, pyqs, mock, notes } }
+      syllabus: {}, // { "math-1": { theory, pyqs, revision } }
+      settings: {
+        morningTime: "07:00",
+        eveningTime: "21:30"
+      }
+    };
+
+    /* -------------------------------------------------------------------------
+       4. UTILITY FUNCTIONS
+       ------------------------------------------------------------------------- */
+    function formatISODateLocal(dt) {
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, "0");
+      const d = String(dt.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function getClampedTodayDate() {
+      const nowStr = formatISODateLocal(new Date());
+      const first = SCHEDULE_DATA[0].date;
+      const last = SCHEDULE_DATA[SCHEDULE_DATA.length - 1].date;
+      if (nowStr < first) return first;
+      if (nowStr > last) return last;
+      return nowStr;
+    }
+
+    function formatDisplayDate(iso) {
+      const [y, m, d] = iso.split("-").map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString("en-IN", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function getDayRecord(dateStr) {
+      const saved = state.schedule[dateStr] || {};
+      return {
+        maths: saved.maths || "Pending",
+        physics: saved.physics || "Pending",
+        chem: saved.chem || "Pending",
+        pyqs: Number(saved.pyqs || 0),
+        mock: saved.mock !== undefined && saved.mock !== null ? String(saved.mock) : "",
+        notes: saved.notes || ""
+      };
+    }
+
+    function getOverallDayStatus(rec) {
+      const arr = [rec.maths, rec.physics, rec.chem];
+      if (arr.every((s) => s === "Completed")) return "Completed";
+      if (arr.some((s) => s === "Completed" || s === "In Progress")) return "In Progress";
+      return "Pending";
+    }
+
+    function getSyllabusRecord(id) {
+      const saved = state.syllabus[id] || {};
+      return {
+        theory: Boolean(saved.theory),
+        pyqs: Boolean(saved.pyqs),
+        revision: Boolean(saved.revision)
+      };
+    }
+
+    function nextStatus(curr) {
+      return STATUS_CYCLE[(STATUS_CYCLE.indexOf(curr) + 1) % STATUS_CYCLE.length];
+    }
+
+    function statusClasses(status) {
+      if (status === "Completed") {
+        return {
+          pill: "bg-emerald-500/15 text-emerald-300 border-emerald-500/35 hover:bg-emerald-500/25",
+          btn: "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20",
+          icon: "check-circle-2"
+        };
+      }
+      if (status === "In Progress") {
+        return {
+          pill: "bg-amber-500/15 text-amber-300 border-amber-500/35 hover:bg-amber-500/25",
+          btn: "bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-amber-400/20",
+          icon: "clock-3"
+        };
+      }
+      return {
+        pill: "bg-slate-800/90 text-slate-300 border-slate-700 hover:border-sky-500/40",
+        btn: "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700",
+        icon: "circle-dashed"
+      };
+    }
+
+    function copyTextToClipboard(text, successMsg) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        showToast(successMsg || "Copied to clipboard!", "success");
+      } catch (err) {
+        showToast("Copy failed — please copy manually.", "warning");
+      }
+      document.body.removeChild(ta);
+    }
+
+    /* -------------------------------------------------------------------------
+       5. TOAST & CUSTOM CONFIRM MODAL (NO alert() / confirm())
+       ------------------------------------------------------------------------- */
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      const el = document.createElement("div");
+      const palette = {
+        success: "bg-emerald-500 text-slate-950 border-emerald-400",
+        error: "bg-rose-600 text-white border-rose-500",
+        warning: "bg-amber-400 text-slate-950 border-amber-300",
+        info: "bg-sky-500 text-slate-950 border-sky-400"
+      };
+      el.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs sm:text-sm font-bold flex items-center justify-between gap-2 transition-all duration-200 ${palette[type] || palette.info}`;
+      el.innerHTML = `<span>${escapeHTML(message)}</span>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(-8px)";
+        setTimeout(() => el.remove(), 220);
+      }, 3400);
+    }
+
+    function showConfirmModal(title, body, onConfirm, okLabel = "Confirm") {
+      const modal = document.getElementById("confirm-modal");
+      document.getElementById("confirm-modal-title").textContent = title;
+      document.getElementById("confirm-modal-body").textContent = body;
+      const okBtn = document.getElementById("confirm-modal-ok");
+      const cancelBtn = document.getElementById("confirm-modal-cancel");
+      okBtn.textContent = okLabel;
+
+      const close = () => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      };
+      okBtn.onclick = () => { close(); if (onConfirm) onConfirm(); };
+      cancelBtn.onclick = close;
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    /* -------------------------------------------------------------------------
+       6. DYNAMIC PWA MANIFEST (STANDALONE ANDROID APP WITHOUT BROWSER BAR)
+       ------------------------------------------------------------------------- */
+    function injectPWAManifest() {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext("2d");
+
+        const grad = ctx.createLinearGradient(0, 0, 512, 512);
+        grad.addColorStop(0, "#0ea5e9");
+        grad.addColorStop(1, "#020617");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(0, 0, 512, 512, 110);
+        ctx.fill();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 165px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("JEE", 256, 210);
+
+        ctx.fillStyle = "#7dd3fc";
+        ctx.font = "800 84px Inter, sans-serif";
+        ctx.fillText("2027", 256, 355);
+
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const iconUrl = URL.createObjectURL(blob);
+          const appleLink = document.createElement("link");
+          appleLink.rel = "apple-touch-icon";
+          appleLink.href = iconUrl;
+          document.head.appendChild(appleLink);
+
+          const manifest = {
+            name: "JEE Main 2027 Command Center",
+            short_name: "JEE 2027",
+            description: "59-Day JEE Main Schedule, 55-Unit Syllabus Checklist & Daily Sync",
+            start_url: window.location.href.split("#")[0],
+            display: "standalone",
+            orientation: "portrait",
+            background_color: "#020617",
+            theme_color: "#020617",
+            icons: [{ src: iconUrl, sizes: "512x512", type: "image/png", purpose: "any maskable" }]
+          };
+          const mBlob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+          const mLink = document.createElement("link");
+          mLink.rel = "manifest";
+          mLink.href = URL.createObjectURL(mBlob);
+          document.head.appendChild(mLink);
+        }, "image/png");
+      } catch (err) {
+        console.warn("PWA manifest note:", err);
+      }
+    }
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const topBtn = document.getElementById("pwa-install-top-btn");
+      const cardBtn = document.getElementById("pwa-install-card-btn");
+      if (topBtn) { topBtn.classList.remove("hidden"); topBtn.classList.add("flex"); }
+      if (cardBtn) { cardBtn.classList.remove("hidden"); cardBtn.classList.add("flex"); }
+    });
+
+    async function handlePWAInstall() {
+      if (!deferredInstallPrompt) {
+        showToast("Tap Chrome Menu (⋮) → 'Install app' or 'Add to Home screen'.", "info");
+        return;
+      }
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === "accepted") showToast("Installed! Open JEE 2027 directly from your Home Screen.", "success");
+      deferredInstallPrompt = null;
+    }
+
+    /* -------------------------------------------------------------------------
+       7. FIREBASE AUTH & FIRESTORE REAL-TIME CROSS-DEVICE SYNC
+       ------------------------------------------------------------------------- */
+    function updateSyncUI(kind, label) {
+      const colors = {
+        synced: "bg-emerald-400",
+        saving: "bg-sky-400 animate-pulse",
+        offline: "bg-amber-400",
+        error: "bg-rose-500"
+      };
+      const dDot = document.getElementById("desktop-sync-dot");
+      const dTxt = document.getElementById("desktop-sync-text");
+      const mDot = document.getElementById("mobile-sync-dot");
+      const mTxt = document.getElementById("mobile-sync-text");
+      if (dDot) dDot.className = `w-2.5 h-2.5 rounded-full shrink-0 ${colors[kind] || colors.offline}`;
+      if (dTxt) dTxt.textContent = label;
+      if (mDot) mDot.className = `w-1.5 h-1.5 rounded-full shrink-0 ${colors[kind] || colors.offline}`;
+      if (mTxt) mTxt.textContent = label;
+    }
+
+    function getCloudDocRef() {
+      if (!db || !currentUser) return null;
+      if (activeRoomId) {
+        // RULE 1: Strict public path for shared cross-device Sync Room
+        return doc(db, "artifacts", appId, "public", "data", "jeeSyncRooms", activeRoomId);
+      }
+      // RULE 1: Strict private user path
+      return doc(db, "artifacts", appId, "users", currentUser.uid, "jeeCommandCenter", "state");
+    }
+
+    function subscribeCloudState(seedIfEmpty = false) {
+      if (!db || !currentUser) return;
+      if (activeUnsubscribe) {
+        activeUnsubscribe();
+        activeUnsubscribe = null;
+      }
+      const ref = getCloudDocRef();
+      if (!ref) return;
+
+      updateSyncUI("saving", activeRoomId ? `Connecting Room: ${activeRoomId}` : "Connecting Cloud...");
+
+      activeUnsubscribe = onSnapshot(
+        ref,
+        (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data.schedule && typeof data.schedule === "object") state.schedule = data.schedule;
+            if (data.syllabus && typeof data.syllabus === "object") state.syllabus = data.syllabus;
+            if (data.settings && typeof data.settings === "object") {
+              state.settings = { ...state.settings, ...data.settings };
+              const mIn = document.getElementById("morning-time-input");
+              const eIn = document.getElementById("evening-time-input");
+              if (mIn && state.settings.morningTime) mIn.value = state.settings.morningTime;
+              if (eIn && state.settings.eveningTime) eIn.value = state.settings.eveningTime;
+            }
+          } else if (seedIfEmpty) {
+            // Initialize brand-new Sync Room with current session progress
+            saveCloudState(true);
+          }
+          updateSyncUI("synced", activeRoomId ? `Synced • Room: ${activeRoomId}` : "Cloud Synced");
+          renderAll();
+        },
+        (err) => {
+          console.error("Firestore onSnapshot error:", err);
+          updateSyncUI("error", "Sync Error (Session Active)");
+          showToast("Cloud sync listener error. Updates kept in current session.", "warning");
+        }
+      );
+    }
+
+    let saveTimer = null;
+    function saveCloudState(immediate = false) {
+      if (!db || !currentUser) {
+        updateSyncUI("offline", "Local Session Mode");
+        return;
+      }
+      const execute = async () => {
+        if (!currentUser) return;
+        const ref = getCloudDocRef();
+        if (!ref) return;
+        updateSyncUI("saving", "Syncing...");
+        try {
+          await setDoc(ref, {
+            schedule: state.schedule,
+            syllabus: state.syllabus,
+            settings: state.settings,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+          updateSyncUI("synced", activeRoomId ? `Synced • Room: ${activeRoomId}` : "Cloud Synced");
+        } catch (err) {
+          console.error("Firestore write failed:", err);
+          updateSyncUI("error", "Save Failed");
+          showToast("Could not save to cloud. Check connection.", "error");
+        }
+      };
+
+      clearTimeout(saveTimer);
+      if (immediate) execute();
+      else saveTimer = setTimeout(execute, 350);
+    }
+
+    async function initFirebase() {
+      try {
+        if (typeof __firebase_config === "undefined" || !__firebase_config) {
+          updateSyncUI("offline", "Preview Mode (No Cloud Config)");
+          document.getElementById("full-user-id").textContent = "Preview Mode (Cloud Config Unavailable)";
+          return;
+        }
+        const cfg = typeof __firebase_config === "string" ? JSON.parse(__firebase_config) : __firebase_config;
+        const app = initializeApp(cfg);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        // RULE 3: Authenticate FIRST before any Firestore reads/writes
+        if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+
+        currentUser = auth.currentUser;
+        if (currentUser) {
+          document.getElementById("full-user-id").textContent = currentUser.uid;
+          subscribeCloudState(false);
+        }
+      } catch (err) {
+        console.error("Firebase initialization failed:", err);
+        updateSyncUI("offline", "Local Session Mode");
+        document.getElementById("full-user-id").textContent = "Auth Unavailable";
+      }
+    }
+
+    /* -------------------------------------------------------------------------
+       8. ANALYTICS ENGINE
+       ------------------------------------------------------------------------- */
+    function updateCountdowns() {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const examDate = new Date(2027, 0, 22);     // Jan 22, 2027
+      const syllabusDate = new Date(2027, 0, 7);  // Jan 7, 2027
+      const msDay = 86400000;
+
+      const dExam = Math.max(0, Math.ceil((examDate - now) / msDay));
+      const dSyl = Math.max(0, Math.ceil((syllabusDate - now) / msDay));
+
+      document.getElementById("countdown-exam").textContent = dExam;
+      document.getElementById("countdown-syllabus").textContent = dSyl;
+      document.getElementById("sidebar-days-left").textContent = dExam;
+    }
+
+    function computeMetrics() {
+      const subjCounts = {
+        maths: { Completed: 0, "In Progress": 0, Pending: 0 },
+        physics: { Completed: 0, "In Progress": 0, Pending: 0 },
+        chem: { Completed: 0, "In Progress": 0, Pending: 0 }
+      };
+
+      let completedTargets = 0;
+      let totalPyqs = 0;
+      const mockScores = [];
+      const activeDays = new Set();
+
+      SCHEDULE_DATA.forEach((d) => {
+        const r = getDayRecord(d.date);
+        ["maths", "physics", "chem"].forEach((k) => {
+          subjCounts[k][r[k]] = (subjCounts[k][r[k]] || 0) + 1;
+          if (r[k] === "Completed") completedTargets++;
+        });
+        totalPyqs += r.pyqs;
+        if (r.mock !== "" && !isNaN(Number(r.mock))) mockScores.push(Number(r.mock));
+        if (r.maths === "Completed" || r.physics === "Completed" || r.chem === "Completed" || r.pyqs > 0) {
+          activeDays.add(d.date);
+        }
+      });
+
+      // Compute streak up to today
+      const todayIso = getClampedTodayDate();
+      const todayIdx = SCHEDULE_DATA.findIndex((d) => d.date === todayIso);
+      let streak = 0;
+      for (let i = todayIdx; i >= 0; i--) {
+        const dt = SCHEDULE_DATA[i].date;
+        if (activeDays.has(dt)) streak++;
+        else if (i === todayIdx) continue;
+        else break;
+      }
+
+      // Syllabus mastery across Maths, Physics, POC, IOC, OC
+      const groups = ["Mathematics", "Physics", "POC", "IOC", "OC"];
+      const bySubj = {};
+      groups.forEach((g) => { bySubj[g] = { chapters: 0, mastered: 0, ticks: 0, maxTicks: 0 }; });
+
+      let totalMastered = 0;
+      let totalTicks = 0;
+
+      SYLLABUS_DATA.forEach((item) => {
+        const r = getSyllabusRecord(item.id);
+        const g = bySubj[item.subject];
+        g.chapters++;
+        g.maxTicks += 3;
+        const t = (r.theory ? 1 : 0) + (r.pyqs ? 1 : 0) + (r.revision ? 1 : 0);
+        g.ticks += t;
+        totalTicks += t;
+        if (t === 3) {
+          g.mastered++;
+          totalMastered++;
+        }
+      });
+
+      const totalTargets = SCHEDULE_DATA.length * 3; // 177
+      const overallPct = Math.round((completedTargets / totalTargets) * 100);
+      const syllabusPct = Math.round((totalTicks / (SYLLABUS_DATA.length * 3)) * 100);
+      const avgMock = mockScores.length ? Math.round(mockScores.reduce((a, b) => a + b, 0) / mockScores.length) : null;
+
+      return {
+        subjCounts,
+        completedTargets,
+        totalTargets,
+        overallPct,
+        totalPyqs,
+        avgMock,
+        streak,
+        bySubj,
+        totalMastered,
+        syllabusPct
+      };
+    }
+
+    /* -------------------------------------------------------------------------
+       9. RENDERERS: DASHBOARD, TODAY'S MISSION, 59-DAY BREAKDOWN, SYLLABUS, SYNC
+       ------------------------------------------------------------------------- */
+    function renderDashboard() {
+      const m = computeMetrics();
+
+      // KPIs
+      document.getElementById("kpi-overall-pct").textContent = `${m.overallPct}%`;
+      document.getElementById("kpi-overall-sub").textContent = `${m.completedTargets} / ${m.totalTargets} daily targets`;
+      document.getElementById("kpi-mastered").textContent = `${m.totalMastered} / ${SYLLABUS_DATA.length}`;
+      document.getElementById("kpi-mastered-sub").textContent = `${m.syllabusPct}% syllabus checkpoints`;
+      document.getElementById("kpi-streak").textContent = `${m.streak} ${m.streak === 1 ? "Day" : "Days"}`;
+      document.getElementById("kpi-pyqs").textContent = m.totalPyqs.toLocaleString();
+      document.getElementById("kpi-mock-avg").textContent = `Avg Mock: ${m.avgMock !== null ? m.avgMock : "--"} / 300`;
+
+      // Subject Progress Bars (Maths, Physics, POC, IOC, OC)
+      const barsSpec = [
+        { key: "Mathematics", label: "Mathematics (14 Units)", barColor: "bg-sky-400" },
+        { key: "Physics", label: "Physics (20 Units)", barColor: "bg-cyan-400" },
+        { key: "POC", label: "Physical Chemistry — POC (8 Units)", barColor: "bg-emerald-400" },
+        { key: "IOC", label: "Inorganic Chemistry — IOC (5 Units)", barColor: "bg-amber-400" },
+        { key: "OC", label: "Organic Chemistry — OC (8 Units)", barColor: "bg-violet-400" }
+      ];
+
+      document.getElementById("subject-progress-bars").innerHTML = barsSpec.map((b) => {
+        const g = m.bySubj[b.key];
+        const pct = g.maxTicks ? Math.round((g.ticks / g.maxTicks) * 100) : 0;
+        return `
+          <div>
+            <div class="flex items-center justify-between text-xs sm:text-sm mb-1.5">
+              <span class="font-bold text-slate-200">${b.label}</span>
+              <span class="font-bold text-white">${pct}% <span class="text-slate-400 font-medium">(${g.mastered}/${g.chapters} mastered)</span></span>
+            </div>
+            <div class="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden">
+              <div class="h-full rounded-full ${b.barColor} transition-all duration-500" style="width:${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      // Chart.js Stacked Bar Chart
+      const ctx = document.getElementById("schedule-stacked-chart");
+      if (ctx) {
+        if (stackedChart) stackedChart.destroy();
+        stackedChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["Mathematics", "Physics", "Chemistry"],
+            datasets: [
+              {
+                label: "Completed",
+                data: [m.subjCounts.maths.Completed, m.subjCounts.physics.Completed, m.subjCounts.chem.Completed],
+                backgroundColor: "#10b981",
+                borderRadius: 6
+              },
+              {
+                label: "In Progress",
+                data: [m.subjCounts.maths["In Progress"], m.subjCounts.physics["In Progress"], m.subjCounts.chem["In Progress"]],
+                backgroundColor: "#f59e0b",
+                borderRadius: 6
+              },
+              {
+                label: "Pending",
+                data: [m.subjCounts.maths.Pending, m.subjCounts.physics.Pending, m.subjCounts.chem.Pending],
+                backgroundColor: "#1e293b",
+                borderRadius: 6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { color: "#cbd5e1", boxWidth: 12, padding: 14, font: { family: "Inter", weight: "600" } }
+              }
+            },
+            scales: {
+              x: { stacked: true, ticks: { color: "#e2e8f0", font: { weight: "700" } }, grid: { display: false } },
+              y: { stacked: true, max: 59, ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.1)" } }
+            }
+          }
+        });
+      }
+
+      renderTodaysMission();
+      renderBreakdownList();
+    }
+
+    function renderTodaysMission() {
+      const idx = SCHEDULE_DATA.findIndex((d) => d.date === state.selectedDate);
+      const item = SCHEDULE_DATA[idx >= 0 ? idx : 0];
+      const rec = getDayRecord(item.date);
+      const overall = getOverallDayStatus(rec);
+      const ovCls = statusClasses(overall);
+
+      document.getElementById("mission-day-badge").textContent = `Day ${item.dayNum} / 59`;
+      document.getElementById("mission-week-badge").textContent = item.week;
+      document.getElementById("mission-date-text").textContent = formatDisplayDate(item.date);
+
+      const ovEl = document.getElementById("mission-overall-status");
+      ovEl.textContent = overall;
+      ovEl.className = `ml-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${ovCls.pill}`;
+
+      document.getElementById("mission-pyq-chip").textContent = `PYQs Logged: ${rec.pyqs}`;
+      const mockChip = document.getElementById("mission-mock-chip");
+      if (rec.mock !== "") {
+        mockChip.textContent = `Mock Score: ${rec.mock}/300`;
+        mockChip.classList.remove("hidden");
+      } else {
+        mockChip.classList.add("hidden");
+      }
+
+      document.getElementById("mission-prev-btn").disabled = idx <= 0;
+      document.getElementById("mission-prev-btn").classList.toggle("opacity-40", idx <= 0);
+      document.getElementById("mission-next-btn").disabled = idx >= SCHEDULE_DATA.length - 1;
+      document.getElementById("mission-next-btn").classList.toggle("opacity-40", idx >= SCHEDULE_DATA.length - 1);
+
+      const cards = [
+        { key: "maths", label: "Mathematics", badge: "bg-sky-500/15 text-sky-300", slot: "Slot 1 • 4.0h", topic: item.maths, status: rec.maths },
+        { key: "physics", label: "Physics", badge: "bg-cyan-500/15 text-cyan-300", slot: "Slot 2 • 3.5h", topic: item.physics, status: rec.physics },
+        { key: "chem", label: "Chemistry", badge: "bg-emerald-500/15 text-emerald-300", slot: "Slot 3 • 2.5h", topic: item.chem, status: rec.chem }
+      ];
+
+      document.getElementById("mission-cards-grid").innerHTML = cards.map((c) => {
+        const st = statusClasses(c.status);
+        return `
+          <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between gap-3.5 hover:border-sky-500/35 transition">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold ${c.badge}">${c.label}</span>
+                <span class="text-[11px] font-medium text-slate-500">${c.slot}</span>
+              </div>
+              <p class="text-sm font-bold text-white leading-snug">${escapeHTML(c.topic)}</p>
+            </div>
+            <button data-cycle-date="${item.date}" data-cycle-subj="${c.key}" class="cycle-status-btn w-full py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition ${st.btn}">
+              <i data-lucide="${st.icon}" class="w-4 h-4"></i>
+              <span>${c.status}</span>
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderBreakdownList() {
+      // Style week filter chips
+      document.querySelectorAll(".week-chip").forEach((btn) => {
+        const active = btn.dataset.week === state.weekFilter;
+        btn.className = `week-chip px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition ${active
+          ? "bg-sky-500 text-slate-950 shadow-md shadow-sky-500/20"
+          : "bg-slate-950 border border-slate-800 text-slate-300 hover:border-sky-500/40"}`;
+      });
+
+      const q = state.breakdownSearch.trim().toLowerCase();
+      const filtered = SCHEDULE_DATA.filter((d) => {
+        const rec = getDayRecord(d.date);
+        const ov = getOverallDayStatus(rec);
+        if (state.weekFilter !== "ALL" && d.week !== state.weekFilter) return false;
+        if (state.breakdownStatus !== "ALL" && ov !== state.breakdownStatus) return false;
+        if (q) {
+          const hay = `day ${d.dayNum} ${d.date} ${formatDisplayDate(d.date)} ${d.week} ${d.maths} ${d.physics} ${d.chem} ${rec.notes}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      document.getElementById("breakdown-count-badge").textContent = `Showing ${filtered.length} / 59 Days`;
+      const container = document.getElementById("breakdown-list-container");
+
+      if (!filtered.length) {
+        container.innerHTML = `<div class="p-8 text-center rounded-2xl bg-slate-950 border border-slate-800 text-sm text-slate-400">No days match your current filter.</div>`;
+        return;
+      }
+
+      const todayIso = getClampedTodayDate();
+      container.innerHTML = filtered.map((d) => {
+        const rec = getDayRecord(d.date);
+        const ov = getOverallDayStatus(rec);
+        const ovCls = statusClasses(ov);
+        const mCls = statusClasses(rec.maths);
+        const pCls = statusClasses(rec.physics);
+        const cCls = statusClasses(rec.chem);
+        const isToday = d.date === todayIso;
+
+        return `
+          <div class="p-4 rounded-2xl bg-slate-950/75 border ${isToday ? "border-sky-500 ring-1 ring-sky-500/40" : "border-slate-800/90"} space-y-3 transition">
+            <!-- Day Header -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 rounded-lg bg-slate-800 text-sky-300 text-xs font-extrabold">Day ${d.dayNum}</span>
+                <span class="text-sm font-bold text-white">${formatDisplayDate(d.date)}</span>
+                ${isToday ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-sky-500 text-slate-950 uppercase">Today</span>` : ""}
+                <span class="text-[11px] font-semibold text-slate-500">• ${d.week}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${ovCls.pill}">${ov}</span>
+                <button data-checkin-date="${d.date}" class="day-checkin-trigger px-2.5 py-1 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 text-[11px] font-bold transition">Check-In</button>
+              </div>
+            </div>
+
+            <!-- 3 Subjects Row with Inline Status Pills -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between gap-2.5">
+                <div class="min-w-0">
+                  <span class="block text-[10px] font-extrabold uppercase tracking-wider text-sky-400">Maths</span>
+                  <span class="block text-xs font-semibold text-slate-100 leading-snug mt-0.5">${escapeHTML(d.maths)}</span>
+                </div>
+                <button data-cycle-date="${d.date}" data-cycle-subj="maths" class="cycle-status-btn shrink-0 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border active:scale-95 transition ${mCls.pill}">${rec.maths}</button>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between gap-2.5">
+                <div class="min-w-0">
+                  <span class="block text-[10px] font-extrabold uppercase tracking-wider text-cyan-400">Physics</span>
+                  <span class="block text-xs font-semibold text-slate-100 leading-snug mt-0.5">${escapeHTML(d.physics)}</span>
+                </div>
+                <button data-cycle-date="${d.date}" data-cycle-subj="physics" class="cycle-status-btn shrink-0 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border active:scale-95 transition ${pCls.pill}">${rec.physics}</button>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between gap-2.5">
+                <div class="min-w-0">
+                  <span class="block text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">Chemistry</span>
+                  <span class="block text-xs font-semibold text-slate-100 leading-snug mt-0.5">${escapeHTML(d.chem)}</span>
+                </div>
+                <button data-cycle-date="${d.date}" data-cycle-subj="chem" class="cycle-status-btn shrink-0 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border active:scale-95 transition ${cCls.pill}">${rec.chem}</button>
+              </div>
+            </div>
+
+            ${(rec.pyqs > 0 || rec.mock !== "" || rec.notes) ? `
+              <div class="flex flex-wrap items-center gap-3 pt-1 text-xs text-slate-400">
+                ${rec.pyqs > 0 ? `<span class="font-bold text-cyan-400">PYQs: ${rec.pyqs}</span>` : ""}
+                ${rec.mock !== "" ? `<span class="font-bold text-amber-400">Mock: ${escapeHTML(rec.mock)}/300</span>` : ""}
+                ${rec.notes ? `<span class="italic text-slate-400 truncate max-w-lg">"${escapeHTML(rec.notes)}"</span>` : ""}
+              </div>
+            ` : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderSyllabusView() {
+      document.querySelectorAll(".syl-chip").forEach((btn) => {
+        const active = btn.dataset.subj === state.syllabusSubject;
+        btn.className = `syl-chip px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition ${active
+          ? "bg-sky-500 text-slate-950 shadow-md shadow-sky-500/20"
+          : "bg-slate-900 border border-slate-800 text-slate-300 hover:border-sky-500/40"}`;
+      });
+
+      const q = state.syllabusSearch.trim().toLowerCase();
+      const filtered = SYLLABUS_DATA.filter((item) => {
+        if (state.syllabusSubject !== "ALL" && item.subject !== state.syllabusSubject) return false;
+        if (q) {
+          const hay = `${item.subject} ${item.unit} ${item.name} ${item.target}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      let masteredCount = 0;
+      SYLLABUS_DATA.forEach((it) => {
+        const r = getSyllabusRecord(it.id);
+        if (r.theory && r.pyqs && r.revision) masteredCount++;
+      });
+      document.getElementById("syllabus-mastered-pill").textContent = `${masteredCount} / ${SYLLABUS_DATA.length} Mastered`;
+
+      const badgeMap = {
+        Mathematics: "bg-sky-500/15 text-sky-300",
+        Physics: "bg-cyan-500/15 text-cyan-300",
+        POC: "bg-emerald-500/15 text-emerald-300",
+        IOC: "bg-amber-500/15 text-amber-300",
+        OC: "bg-violet-500/15 text-violet-300"
+      };
+
+      const container = document.getElementById("syllabus-list-container");
+      if (!filtered.length) {
+        container.innerHTML = `<div class="p-8 text-center rounded-2xl bg-slate-900 border border-slate-800 text-sm text-slate-400">No syllabus chapters match your search.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map((item) => {
+        const rec = getSyllabusRecord(item.id);
+        const mastered = rec.theory && rec.pyqs && rec.revision;
+        return `
+          <div class="p-4 rounded-2xl bg-slate-900 border ${mastered ? "border-emerald-500/45 bg-emerald-500/[0.04]" : "border-slate-800"} flex flex-col md:flex-row md:items-center justify-between gap-3.5 transition">
+            <div class="min-w-0 space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${badgeMap[item.subject] || "bg-slate-800 text-slate-200"}">${item.subject}</span>
+                <span class="text-xs font-bold text-slate-400">${item.unit}</span>
+                <span class="text-[11px] font-medium text-slate-500">• Target: ${item.target}</span>
+                ${mastered ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300">Mastered ✓</span>` : ""}
+              </div>
+              <h4 class="text-sm font-bold text-white leading-snug">${escapeHTML(item.name)}</h4>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 shrink-0">
+              ${[
+                { field: "theory", label: "Theory", checked: rec.theory },
+                { field: "pyqs", label: "PYQs", checked: rec.pyqs },
+                { field: "revision", label: "Revision", checked: rec.revision }
+              ].map((c) => `
+                <label class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border text-xs font-bold cursor-pointer select-none active:scale-95 transition ${c.checked
+                  ? "bg-sky-500 text-slate-950 border-sky-400 shadow-sm shadow-sky-500/20"
+                  : "bg-slate-950 text-slate-300 border-slate-800 hover:border-sky-500/40"}">
+                  <input type="checkbox" data-syl-id="${item.id}" data-syl-field="${c.field}" ${c.checked ? "checked" : ""} class="syl-checkbox sr-only" />
+                  <span>${c.checked ? "✓ " : ""}${c.label}</span>
+                </label>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderSyncView() {
+      const todayIso = getClampedTodayDate();
+      const item = SCHEDULE_DATA.find((d) => d.date === todayIso) || SCHEDULE_DATA[0];
+      const box = document.getElementById("alert-preview-box");
+      if (box) {
+        box.innerHTML = `
+          <p class="font-bold text-white mb-1">Day ${item.dayNum} (${formatDisplayDate(item.date)}) • Morning (${state.settings.morningTime}) &amp; Evening (${state.settings.eveningTime})</p>
+          <p>• <span class="text-sky-400 font-semibold">Maths:</span> ${escapeHTML(item.maths)}</p>
+          <p>• <span class="text-cyan-400 font-semibold">Physics:</span> ${escapeHTML(item.physics)}</p>
+          <p>• <span class="text-emerald-400 font-semibold">Chem:</span> ${escapeHTML(item.chem)}</p>
+        `;
+      }
+      updatePushBadge();
+    }
+
+    function updatePushBadge() {
+      const pill = document.getElementById("push-status-pill");
+      if (!pill) return;
+      if (!("Notification" in window)) {
+        pill.textContent = "Use .ics Alarms";
+        pill.className = "px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300";
+        return;
+      }
+      const p = Notification.permission;
+      if (p === "granted") {
+        pill.textContent = "Push Active ✓";
+        pill.className = "px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-300";
+      } else if (p === "denied") {
+        pill.textContent = "Blocked (Use .ics)";
+        pill.className = "px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-300";
+      } else {
+        pill.textContent = "Not Enabled";
+        pill.className = "px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300";
+      }
+    }
+
+    function renderAll() {
+      if (state.activeTab === "dashboard") renderDashboard();
+      else if (state.activeTab === "syllabus") renderSyllabusView();
+      else if (state.activeTab === "sync") renderSyncView();
+      lucide.createIcons();
+    }
+
+    /* -------------------------------------------------------------------------
+       10. END-OF-DAY CHECK-IN MODAL LOGIC (AUTO-SYNCS SCHEDULE + SYLLABUS)
+       ------------------------------------------------------------------------- */
+    function populateCheckinDateSelect() {
+      const sel = document.getElementById("checkin-date-select");
+      sel.innerHTML = SCHEDULE_DATA.map((d) =>
+        `<option value="${d.date}">Day ${d.dayNum} • ${formatDisplayDate(d.date)} (${d.week})</option>`
+      ).join("");
+    }
+
+    function renderCheckinModalContent(dateStr) {
+      state.checkinDate = dateStr;
+      const item = SCHEDULE_DATA.find((d) => d.date === dateStr) || SCHEDULE_DATA[0];
+      const rec = getDayRecord(item.date);
+
+      document.getElementById("checkin-date-select").value = item.date;
+      document.getElementById("checkin-subtitle").textContent = `Day ${item.dayNum} • ${formatDisplayDate(item.date)}`;
+      document.getElementById("checkin-pyqs").value = rec.pyqs || "";
+      document.getElementById("checkin-mock").value = rec.mock;
+      document.getElementById("checkin-notes").value = rec.notes;
+
+      const subjects = [
+        { key: "maths", label: "Mathematics", color: "text-sky-400", topic: item.maths, status: rec.maths, linkedIds: item.links.maths },
+        { key: "physics", label: "Physics", color: "text-cyan-400", topic: item.physics, status: rec.physics, linkedIds: item.links.physics },
+        { key: "chem", label: "Chemistry", color: "text-emerald-400", topic: item.chem, status: rec.chem, linkedIds: item.links.chem }
+      ];
+
+      document.getElementById("checkin-subjects-list").innerHTML = subjects.map((s) => {
+        const isDone = s.status === "Completed";
+        const linkedNames = s.linkedIds
+          .map((id) => SYLLABUS_MAP[id] ? `${SYLLABUS_MAP[id].unit}: ${SYLLABUS_MAP[id].name}` : "")
+          .filter(Boolean);
+
+        return `
+          <label class="flex items-start gap-3.5 p-3.5 rounded-2xl border cursor-pointer transition ${isDone
+            ? "bg-emerald-500/10 border-emerald-500/40"
+            : "bg-slate-950/70 border-slate-800 hover:border-sky-500/40"}">
+            <input type="checkbox" data-checkin-subj="${s.key}" ${isDone ? "checked" : ""} class="checkin-subj-chk mt-1 w-5 h-5 rounded accent-emerald-500 shrink-0 cursor-pointer" />
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-extrabold uppercase tracking-wider ${s.color}">${s.label}</span>
+                <span class="text-[11px] font-bold ${isDone ? "text-emerald-400" : "text-slate-500"}">${isDone ? "Completed ✓" : s.status}</span>
+              </div>
+              <p class="text-sm font-bold text-white mt-0.5 leading-snug">${escapeHTML(s.topic)}</p>
+              ${linkedNames.length ? `
+                <p class="text-[11px] text-sky-400/90 mt-1 flex items-center gap-1">
+                  <i data-lucide="link-2" class="w-3 h-3 shrink-0"></i>
+                  <span class="truncate">Syncs syllabus: ${escapeHTML(linkedNames.join(" • "))}</span>
+                </p>
+              ` : ""}
+            </div>
+          </label>
+        `;
+      }).join("");
+
+      lucide.createIcons();
+    }
+
+    function openCheckinModal(dateStr) {
+      renderCheckinModalContent(dateStr || state.selectedDate);
+      const modal = document.getElementById("checkin-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeCheckinModal() {
+      const modal = document.getElementById("checkin-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function saveCheckinModal() {
+      const dateStr = state.checkinDate;
+      const item = SCHEDULE_DATA.find((d) => d.date === dateStr) || SCHEDULE_DATA[0];
+      const existing = getDayRecord(dateStr);
+
+      const checks = {};
+      document.querySelectorAll(".checkin-subj-chk").forEach((chk) => {
+        checks[chk.dataset.checkinSubj] = chk.checked;
+      });
+
+      const updatedSchedule = {
+        maths: checks.maths ? "Completed" : (existing.maths === "Completed" ? "In Progress" : existing.maths),
+        physics: checks.physics ? "Completed" : (existing.physics === "Completed" ? "In Progress" : existing.physics),
+        chem: checks.chem ? "Completed" : (existing.chem === "Completed" ? "In Progress" : existing.chem),
+        pyqs: Math.max(0, parseInt(document.getElementById("checkin-pyqs").value, 10) || 0),
+        mock: document.getElementById("checkin-mock").value.trim(),
+        notes: document.getElementById("checkin-notes").value.trim()
+      };
+
+      state.schedule[dateStr] = updatedSchedule;
+
+      // Auto-sync matching syllabus checklist units for every checked subject
+      const autoTheory = document.getElementById("checkin-auto-theory").checked;
+      const autoPyqs = document.getElementById("checkin-auto-pyqs").checked;
+      const autoRevision = document.getElementById("checkin-auto-revision").checked;
+
+      let syncedUnitsCount = 0;
+      ["maths", "physics", "chem"].forEach((subjKey) => {
+        if (!checks[subjKey]) return;
+        const ids = item.links[subjKey] || [];
+        ids.forEach((uid) => {
+          const prev = getSyllabusRecord(uid);
+          state.syllabus[uid] = {
+            theory: prev.theory || autoTheory,
+            pyqs: prev.pyqs || autoPyqs,
+            revision: prev.revision || autoRevision
+          };
+          syncedUnitsCount++;
+        });
+      });
+
+      saveCloudState(true);
+      closeCheckinModal();
+      renderAll();
+
+      const doneSubjects = Object.values(checks).filter(Boolean).length;
+      showToast(
+        `Day ${item.dayNum} Check-In saved! ${doneSubjects}/3 subjects completed${syncedUnitsCount ? ` & ${syncedUnitsCount} syllabus unit(s) synced.` : "."}`,
+        "success"
+      );
+    }
+
+    /* -------------------------------------------------------------------------
+       11. PUSH NOTIFICATIONS & 118-ALERT ANDROID .ICS GENERATOR
+       ------------------------------------------------------------------------- */
+    function triggerAlertNotification(kind = "morning", isTest = false) {
+      const todayIso = getClampedTodayDate();
+      const item = SCHEDULE_DATA.find((d) => d.date === todayIso) || SCHEDULE_DATA[0];
+
+      const title = kind === "evening"
+        ? `JEE Day ${item.dayNum} End-of-Day Check-In`
+        : `JEE Day ${item.dayNum} Morning Briefing (${item.dow})`;
+
+      const body = kind === "evening"
+        ? `Time to mark off today's chapters & log PYQs!\nMaths: ${item.maths}\nPhysics: ${item.physics}\nChem: ${item.chem}`
+        : `Today's Study Targets:\nMaths: ${item.maths}\nPhysics: ${item.physics}\nChem: ${item.chem}`;
+
+      if ("Notification" in window && Notification.permission === "granted") {
+        try {
+          new Notification(title, { body, tag: `jee2027-${kind}-${item.date}` });
+          showToast(isTest ? "Test notification triggered! Check your notification tray." : `${title} sent!`, "success");
+          return;
+        } catch (err) {
+          console.warn("Notification note:", err);
+        }
+      }
+      showToast(`${title} — M: ${item.maths} | P: ${item.physics} | C: ${item.chem}`, "info");
+    }
+
+    // In-app background minute checker for Morning & Evening alerts
+    setInterval(() => {
+      const now = new Date();
+      const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const dateKey = formatISODateLocal(now);
+
+      if (hhmm === state.settings.morningTime && lastMorningNotifDate !== dateKey) {
+        lastMorningNotifDate = dateKey;
+        triggerAlertNotification("morning", false);
+      }
+      if (hhmm === state.settings.eveningTime && lastEveningNotifDate !== dateKey) {
+        lastEveningNotifDate = dateKey;
+        triggerAlertNotification("evening", false);
+      }
+    }, 30000);
+
+    function escapeICS(str) {
+      return String(str)
+        .replace(/\\/g, "\\\\")
+        .replace(/;/g, "\\;")
+        .replace(/,/g, "\\,")
+        .replace(/\n/g, "\\n");
+    }
+
+    function addMinutesHHMM(hhmm, addMins) {
+      const [h, m] = hhmm.split(":").map((v) => parseInt(v, 10) || 0);
+      const total = Math.min(23 * 60 + 55, h * 60 + m + addMins);
+      return `${String(Math.floor(total / 60)).padStart(2, "0")}${String(total % 60).padStart(2, "0")}`;
+    }
+
+    function export118AndroidICS() {
+      const morning = state.settings.morningTime || "07:00";
+      const evening = state.settings.eveningTime || "21:30";
+      const mStart = morning.replace(":", "");
+      const mEnd = addMinutesHHMM(morning, 30);
+      const eStart = evening.replace(":", "");
+      const eEnd = addMinutesHHMM(evening, 20);
+      const stamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+      const lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//JEE Main 2027 Command Center//118 Daily Alarms//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "X-WR-CALNAME:JEE Main 2027 Daily Study Alerts (118 Alarms)",
+        "X-WR-TIMEZONE:Asia/Kolkata"
+      ];
+
+      SCHEDULE_DATA.forEach((d) => {
+        const ymd = d.date.replace(/-/g, "");
+
+        // 1. Morning Briefing Event (59 events)
+        const mSummary = `JEE Day ${d.dayNum} Study: M: ${d.maths} | P: ${d.physics} | C: ${d.chem}`;
+        const mDesc = [
+          `JEE Main 2027 — Day ${d.dayNum} of 59 (${d.week})`,
+          ``,
+          `MATHEMATICS (4.0h): ${d.maths}`,
+          `PHYSICS (3.5h): ${d.physics}`,
+          `CHEMISTRY (2.5h): ${d.chem}`,
+          `NIGHT REVISION (1.0h): Formula sheets & NCERT flashcards`
+        ].join("\n");
+
+        lines.push(
+          "BEGIN:VEVENT",
+          `UID:jee2027-morning-day${d.dayNum}-${ymd}@commandcenter`,
+          `DTSTAMP:${stamp}`,
+          `DTSTART:${ymd}T${mStart}00`,
+          `DTEND:${ymd}T${mEnd}00`,
+          `SUMMARY:${escapeICS(mSummary)}`,
+          `DESCRIPTION:${escapeICS(mDesc)}`,
+          "STATUS:CONFIRMED",
+          "BEGIN:VALARM",
+          "TRIGGER:-PT0M",
+          "ACTION:DISPLAY",
+          `DESCRIPTION:${escapeICS(`JEE Day ${d.dayNum}: M: ${d.maths} | P: ${d.physics} | C: ${d.chem}`)}`,
+          "END:VALARM",
+          "BEGIN:VALARM",
+          "TRIGGER:-PT15M",
+          "ACTION:DISPLAY",
+          `DESCRIPTION:${escapeICS(`15 mins to JEE Day ${d.dayNum} Study Session`)}`,
+          "END:VALARM",
+          "END:VEVENT"
+        );
+
+        // 2. Evening End-of-Day Check-In Event (59 events) => 118 total events!
+        const eSummary = `JEE Day ${d.dayNum} Check-In: Mark Completed Chapters & Log PYQs`;
+        const eDesc = [
+          `End-of-Day Check-In for Day ${d.dayNum} (${d.week})`,
+          `Open your JEE Main 2027 Command Center app to check off:`,
+          `- Maths: ${d.maths}`,
+          `- Physics: ${d.physics}`,
+          `- Chemistry: ${d.chem}`,
+          `Log today's PYQ count, mock score, and mistakes to sync with your laptop dashboard!`
+        ].join("\n");
+
+        lines.push(
+          "BEGIN:VEVENT",
+          `UID:jee2027-evening-day${d.dayNum}-${ymd}@commandcenter`,
+          `DTSTAMP:${stamp}`,
+          `DTSTART:${ymd}T${eStart}00`,
+          `DTEND:${ymd}T${eEnd}00`,
+          `SUMMARY:${escapeICS(eSummary)}`,
+          `DESCRIPTION:${escapeICS(eDesc)}`,
+          "STATUS:CONFIRMED",
+          "BEGIN:VALARM",
+          "TRIGGER:-PT0M",
+          "ACTION:DISPLAY",
+          `DESCRIPTION:${escapeICS(`Day ${d.dayNum} End-of-Day Check-In: Mark completed PCM chapters!`)}`,
+          "END:VALARM",
+          "END:VEVENT"
+        );
+      });
+
+      lines.push("END:VCALENDAR");
+
+      const blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "JEE_Main_2027_118_Android_Alarms.ics";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      showToast(`Exported 118 alerts (${morning} morning + ${evening} check-in). Open on Android to import into Google Calendar!`, "success");
+    }
+
+    /* -------------------------------------------------------------------------
+       12. TAB SWITCHING & EVENT BINDINGS
+       ------------------------------------------------------------------------- */
+    const TAB_TITLES = {
+      dashboard: "Dashboard & 59-Day Plan",
+      syllabus: "Syllabus Checklist (55 Items)",
+      sync: "Sync & Daily Reminders"
+    };
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      document.getElementById("topbar-title").textContent = TAB_TITLES[tab] || "Dashboard";
+
+      document.querySelectorAll(".app-view").forEach((sec) => {
+        sec.classList.toggle("hidden", sec.id !== `view-${tab}`);
+      });
+
+      document.querySelectorAll(".nav-btn-desktop").forEach((btn) => {
+        const active = btn.dataset.tab === tab;
+        btn.className = `nav-btn-desktop w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition ${active
+          ? "bg-sky-500 text-slate-950 shadow-lg shadow-sky-500/25"
+          : "text-slate-400 hover:bg-slate-800/80 hover:text-white"}`;
+      });
+
+      document.querySelectorAll(".nav-btn-mobile").forEach((btn) => {
+        const active = btn.dataset.tab === tab;
+        btn.className = `nav-btn-mobile flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition ${active
+          ? "text-sky-400"
+          : "text-slate-500"}`;
+      });
+
+      renderAll();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function bindEvents() {
+      // Navigation tabs
+      document.querySelectorAll(".nav-btn-desktop, .nav-btn-mobile").forEach((btn) => {
+        btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+      });
+
+      // PWA Install buttons
+      document.getElementById("pwa-install-top-btn").addEventListener("click", handlePWAInstall);
+      document.getElementById("pwa-install-card-btn").addEventListener("click", handlePWAInstall);
+
+      // End-of-Day Check-In triggers
+      document.getElementById("open-checkin-btn").addEventListener("click", () => openCheckinModal(state.selectedDate));
+      document.getElementById("mission-checkin-link").addEventListener("click", () => openCheckinModal(state.selectedDate));
+      document.getElementById("close-checkin-btn").addEventListener("click", closeCheckinModal);
+      document.getElementById("cancel-checkin-btn").addEventListener("click", closeCheckinModal);
+      document.getElementById("save-checkin-btn").addEventListener("click", saveCheckinModal);
+
+      document.getElementById("checkin-date-select").addEventListener("change", (e) => {
+        renderCheckinModalContent(e.target.value);
+      });
+
+      document.getElementById("checkin-mark-all-btn").addEventListener("click", () => {
+        document.querySelectorAll(".checkin-subj-chk").forEach((chk) => { chk.checked = true; });
+      });
+
+      document.querySelectorAll(".checkin-pyq-quick").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const inp = document.getElementById("checkin-pyqs");
+          const cur = parseInt(inp.value, 10) || 0;
+          inp.value = cur + parseInt(btn.dataset.checkinAddPyq, 10);
+        });
+      });
+
+      // Today's Mission Prev / Today / Next buttons
+      document.getElementById("mission-prev-btn").addEventListener("click", () => {
+        const idx = SCHEDULE_DATA.findIndex((d) => d.date === state.selectedDate);
+        if (idx > 0) {
+          state.selectedDate = SCHEDULE_DATA[idx - 1].date;
+          renderTodaysMission();
+          lucide.createIcons();
+        }
+      });
+
+      document.getElementById("mission-next-btn").addEventListener("click", () => {
+        const idx = SCHEDULE_DATA.findIndex((d) => d.date === state.selectedDate);
+        if (idx < SCHEDULE_DATA.length - 1) {
+          state.selectedDate = SCHEDULE_DATA[idx + 1].date;
+          renderTodaysMission();
+          lucide.createIcons();
+        }
+      });
+
+      document.getElementById("mission-today-btn").addEventListener("click", () => {
+        state.selectedDate = getClampedTodayDate();
+        renderTodaysMission();
+        lucide.createIcons();
+        showToast("Jumped to today's mission!", "info");
+      });
+
+      // Global delegation: One-tap status cycle pills & per-day Check-In buttons
+      document.body.addEventListener("click", (e) => {
+        const cycleBtn = e.target.closest(".cycle-status-btn");
+        if (cycleBtn) {
+          const dt = cycleBtn.dataset.cycleDate;
+          const subj = cycleBtn.dataset.cycleSubj;
+          const rec = getDayRecord(dt);
+          state.schedule[dt] = { ...rec, [subj]: nextStatus(rec[subj]) };
+          saveCloudState(true);
+          renderAll();
+          return;
+        }
+
+        const dayCheckinBtn = e.target.closest(".day-checkin-trigger");
+        if (dayCheckinBtn) {
+          openCheckinModal(dayCheckinBtn.dataset.checkinDate);
+          return;
+        }
+      });
+
+      // 59-Day Breakdown Filters on Dashboard
+      document.getElementById("week-filter-chips").addEventListener("click", (e) => {
+        const chip = e.target.closest(".week-chip");
+        if (!chip) return;
+        state.weekFilter = chip.dataset.week;
+        renderBreakdownList();
+        lucide.createIcons();
+      });
+
+      document.getElementById("breakdown-search").addEventListener("input", (e) => {
+        state.breakdownSearch = e.target.value;
+        renderBreakdownList();
+      });
+
+      document.getElementById("breakdown-status-filter").addEventListener("change", (e) => {
+        state.breakdownStatus = e.target.value;
+        renderBreakdownList();
+      });
+
+      // Syllabus Filter Chips, Search & Checkboxes
+      document.getElementById("syllabus-filter-chips").addEventListener("click", (e) => {
+        const chip = e.target.closest(".syl-chip");
+        if (!chip) return;
+        state.syllabusSubject = chip.dataset.subj;
+        renderSyllabusView();
+      });
+
+      document.getElementById("syllabus-search-input").addEventListener("input", (e) => {
+        state.syllabusSearch = e.target.value;
+        renderSyllabusView();
+      });
+
+      document.getElementById("syllabus-list-container").addEventListener("change", (e) => {
+        const chk = e.target.closest(".syl-checkbox");
+        if (!chk) return;
+        const id = chk.dataset.sylId;
+        const field = chk.dataset.sylField;
+        const rec = getSyllabusRecord(id);
+        state.syllabus[id] = { ...rec, [field]: chk.checked };
+        saveCloudState(true);
+        renderSyllabusView();
+      });
+
+      // Sync Room Controls
+      document.getElementById("gen-room-btn").addEventListener("click", () => {
+        const rand = "jee27-" + Math.random().toString(36).substring(2, 8);
+        document.getElementById("sync-room-input").value = rand;
+        showToast(`Generated Room ID "${rand}" — click Connect Sync Room!`, "info");
+      });
+
+      document.getElementById("join-room-btn").addEventListener("click", () => {
+        const clean = document.getElementById("sync-room-input").value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, "");
+        if (clean.length < 4) {
+          showToast("Room ID must be at least 4 letters/numbers.", "warning");
+          return;
+        }
+        activeRoomId = clean;
+        document.getElementById("sync-room-input").value = clean;
+        document.getElementById("sync-mode-badge").textContent = `Room: ${clean}`;
+        document.getElementById("leave-room-btn").classList.remove("hidden");
+        const copyRm = document.getElementById("copy-room-btn");
+        copyRm.classList.remove("hidden");
+        copyRm.classList.add("flex");
+        subscribeCloudState(true);
+        showToast(`Connected to Sync Room "${clean}"! Enter this same ID on your other device.`, "success");
+      });
+
+      document.getElementById("leave-room-btn").addEventListener("click", () => {
+        activeRoomId = "";
+        document.getElementById("sync-room-input").value = "";
+        document.getElementById("sync-mode-badge").textContent = "Private Session";
+        document.getElementById("leave-room-btn").classList.add("hidden");
+        const copyRm = document.getElementById("copy-room-btn");
+        copyRm.classList.add("hidden");
+        copyRm.classList.remove("flex");
+        subscribeCloudState(false);
+        showToast("Switched back to Private Session cloud storage.", "info");
+      });
+
+      document.getElementById("copy-room-btn").addEventListener("click", () => {
+        if (activeRoomId) copyTextToClipboard(activeRoomId, `Copied Sync Room ID "${activeRoomId}"!`);
+      });
+
+      document.getElementById("copy-uid-btn").addEventListener("click", () => {
+        const uid = document.getElementById("full-user-id").textContent;
+        copyTextToClipboard(uid, "Copied User ID to clipboard!");
+      });
+
+      // Reminder Time Pickers & Push Triggers
+      document.getElementById("morning-time-input").addEventListener("change", (e) => {
+        state.settings.morningTime = e.target.value || "07:00";
+        saveCloudState(true);
+        renderSyncView();
+        showToast(`Morning briefing set to ${state.settings.morningTime}`, "success");
+      });
+
+      document.getElementById("evening-time-input").addEventListener("change", (e) => {
+        state.settings.eveningTime = e.target.value || "21:30";
+        saveCloudState(true);
+        renderSyncView();
+        showToast(`End-of-Day Check-In alert set to ${state.settings.eveningTime}`, "success");
+      });
+
+      document.getElementById("enable-push-btn").addEventListener("click", async () => {
+        if (!("Notification" in window)) {
+          showToast("Browser Push is unavailable here. Export the 118-alert .ics calendar instead!", "warning");
+          return;
+        }
+        try {
+          const perm = await Notification.requestPermission();
+          updatePushBadge();
+          if (perm === "granted") showToast("Push notifications enabled! Tap 'Test Today's Alert'.", "success");
+          else showToast("Permission not granted. Use the .ics Calendar export for guaranteed Android alerts.", "warning");
+        } catch (err) {
+          showToast("Push prompt blocked in preview frame. Export the .ics file for Android alarms!", "warning");
+        }
+      });
+
+      document.getElementById("test-alert-btn").addEventListener("click", () => triggerAlertNotification("morning", true));
+      document.getElementById("download-ics-btn").addEventListener("click", export118AndroidICS);
+
+      // JSON Backup Export & Import
+      document.getElementById("export-json-btn").addEventListener("click", () => {
+        const payload = {
+          app: "JEE Main 2027 Command Center",
+          exportedAt: new Date().toISOString(),
+          schedule: state.schedule,
+          syllabus: state.syllabus,
+          settings: state.settings
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `jee_main_2027_backup_${formatISODateLocal(new Date())}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast("JSON backup downloaded!", "success");
+      });
+
+      document.getElementById("import-json-input").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            if (!parsed.schedule && !parsed.syllabus) {
+              showToast("Invalid backup JSON file.", "error");
+              return;
+            }
+            showConfirmModal(
+              "Restore JSON Backup?",
+              "This will replace your current schedule progress and syllabus checkboxes with the backup file and sync it to the cloud.",
+              () => {
+                if (parsed.schedule) state.schedule = parsed.schedule;
+                if (parsed.syllabus) state.syllabus = parsed.syllabus;
+                if (parsed.settings) state.settings = { ...state.settings, ...parsed.settings };
+                saveCloudState(true);
+                renderAll();
+                showToast("Backup restored and synced!", "success");
+              },
+              "Restore"
+            );
+          } catch (err) {
+            showToast("Could not read JSON file.", "error");
+          }
+          e.target.value = "";
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    /* -------------------------------------------------------------------------
+       13. BOOTSTRAP
+       ------------------------------------------------------------------------- */
+    window.addEventListener("DOMContentLoaded", () => {
+      injectPWAManifest();
+      updateCountdowns();
+      populateCheckinDateSelect();
+      bindEvents();
+      switchTab("dashboard");
+      initFirebase();
+    });
+  </script>
+</body>
+</html>
