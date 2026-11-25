@@ -1,0 +1,25 @@
+{
+  "id": "./app.html",
+  "name": "JEETrack — Compact Study Planner",
+  "short_name": "JEETrack",
+  "description": "A compact JEE Main 2027 planner for your phone.",
+  "start_url": "./app.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    {
+      "src": "./jeetrack_icon_192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./jeetrack_icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

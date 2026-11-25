@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
-  <title>JEETrack — JEE Main 2027 Command Center</title>
+  <title>JEETrack — JEE Main 2027 Study Planner</title>
 
   <!-- Native Mobile Web App / PWA Meta Tags -->
   <meta name="application-name" content="JEETrack" />
@@ -12,15 +12,16 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#020617" />
-  <meta name="description" content="JEE Main 2027 Command Center: 59-Day Schedule, 55-Unit Syllabus Checklist, End-of-Day Check-In, Real-Time Phone-Laptop Sync & 118 Android Alerts." />
+  <meta name="description" content="Plan JEE Main 2027 study days, track syllabus progress, review daily results, and sync your progress across devices." />
 
   <!-- Static PWA Manifest & Service Worker for GitHub Pages -->
-  <link rel="manifest" href="/JEETrack/manifest.json" />
-  <link rel="apple-touch-icon" href="/JEETrack/jeetrack_icon.png" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./jeetrack_icon_192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./jeetrack_icon_180.png" />
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/JEETrack/sw.js").catch(() => {});
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
       });
     }
   </script>
@@ -52,6 +53,53 @@
     };
   </script>
 
+  <!-- Core layout remains responsive while optional CDNs are loading. -->
+  <style>
+    html, body { min-height: 100%; }
+    html { scroll-padding-top: 5rem; }
+    body { min-height: 100vh; margin: 0; overflow-x: hidden; background: #020617; color: #f8fafc; font-family: Inter, system-ui, -apple-system, sans-serif; font-size: 15px; line-height: 1.55; color-scheme: dark; }
+    .jeetrack-shell { display: flex; min-height: 100vh; }
+    .jeetrack-sidebar { display: none; }
+    .jeetrack-main { flex: 1; min-width: 0; }
+    .jeetrack-content { width: 100%; max-width: 1440px; margin: 0 auto; padding: 1rem 1rem calc(6.5rem + env(safe-area-inset-bottom)); }
+    .jeetrack-topbar { position: sticky; top: 0; z-index: 30; padding-top: max(.75rem, env(safe-area-inset-top)); }
+    .jeetrack-mobile-nav { position: fixed; inset: auto 0 0; z-index: 40; padding-bottom: max(.5rem, env(safe-area-inset-bottom)); }
+    .app-view { display: none; }
+    .app-view:not(.hidden) { display: block; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    #toast-container { top: max(1rem, env(safe-area-inset-top)); }
+    .jeetrack-content .text-slate-400 { color: #aab6c6 !important; }
+    .jeetrack-content .text-slate-500 { color: #8f9db0 !important; }
+    .jeetrack-content .bg-gradient-to-br { background-image: none !important; background-color: #101a2a !important; }
+    button.bg-gradient-to-r { background-image: none !important; background-color: #38bdf8 !important; color: #071522 !important; }
+    .jeetrack-content .shadow-lg,
+    .jeetrack-content .shadow-xl,
+    .jeetrack-content .shadow-2xl { box-shadow: 0 1px 2px rgb(0 0 0 / 16%) !important; }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid #38bdf8;
+      outline-offset: 2px;
+    }
+    button:disabled { cursor: not-allowed; opacity: .58; }
+    input, select, textarea { font-size: 16px !important; }
+    @media (min-width: 640px) {
+      .jeetrack-content { padding: 1.5rem 1.5rem calc(7rem + env(safe-area-inset-bottom)); }
+    }
+    @media (max-width: 639px) {
+      .jeetrack-content { padding-inline: .875rem; }
+      .jeetrack-content button, .jeetrack-topbar button, .jeetrack-mobile-nav button,
+      #confirm-modal button, #checkin-modal button { min-height: 44px; }
+    }
+    @media (min-width: 1024px) {
+      .jeetrack-sidebar { display: flex; flex-direction: column; position: fixed; inset: 0 auto 0 0; width: 18rem; }
+      .jeetrack-main { margin-left: 18rem; }
+      .jeetrack-content { max-width: 1440px; padding: 1.5rem 2rem; }
+      .jeetrack-mobile-nav { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+
   <!-- Chart.js & Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -63,7 +111,7 @@
   <div id="toast-container" class="fixed top-4 right-4 left-4 sm:left-auto sm:w-96 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- Custom Confirmation Modal (Replaces native alert/confirm) -->
-  <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+  <div id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl shadow-black/60">
       <div class="flex items-start gap-3">
         <div class="p-2.5 rounded-xl bg-sky-500/15 text-sky-400 shrink-0">
@@ -84,7 +132,7 @@
   <!-- ========================================================================= -->
   <!-- END-OF-DAY CHECK-IN MODAL (Mobile-Friendly Sheet / Desktop Dialog)        -->
   <!-- ========================================================================= -->
-  <div id="checkin-modal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-md sm:p-4">
+  <div id="checkin-modal" role="dialog" aria-modal="true" aria-labelledby="checkin-modal-title" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-md sm:p-4">
     <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl shadow-sky-950/50 overflow-hidden">
 
       <!-- Modal Header -->
@@ -94,7 +142,7 @@
             <i data-lucide="check-check" class="w-5 h-5"></i>
           </div>
           <div class="min-w-0">
-            <h2 class="text-base sm:text-lg font-extrabold text-white truncate">End-of-Day Check-In</h2>
+            <h2 id="checkin-modal-title" class="text-base sm:text-lg font-extrabold text-white truncate">End-of-Day Check-In</h2>
             <p id="checkin-subtitle" class="text-xs text-sky-400 font-medium truncate">Mark completed chapters &amp; auto-sync syllabus</p>
           </div>
         </div>
@@ -192,10 +240,10 @@
   <!-- ========================================================================= -->
   <!-- MAIN APPLICATION LAYOUT                                                   -->
   <!-- ========================================================================= -->
-  <div class="flex min-h-screen">
+  <div class="jeetrack-shell flex min-h-screen">
 
     <!-- Desktop Sidebar -->
-    <aside class="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 bg-slate-900/95 border-r border-slate-800/90 z-30">
+    <aside class="jeetrack-sidebar hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 bg-slate-900/95 border-r border-slate-800/90 z-30">
       <!-- Brand -->
       <div class="p-6 border-b border-slate-800/80">
         <div class="flex items-center gap-3">
@@ -216,7 +264,7 @@
       </div>
 
       <!-- Desktop Navigation Tabs -->
-      <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+      <nav aria-label="Main navigation" class="flex-1 p-4 space-y-2 overflow-y-auto">
         <button data-tab="dashboard" class="nav-btn-desktop w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition">
           <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
           <span>Dashboard &amp; 59-Day Plan</span>
@@ -251,10 +299,10 @@
     </aside>
 
     <!-- Main Right Column -->
-    <div class="flex-1 lg:pl-72 flex flex-col min-w-0">
+    <div class="jeetrack-main flex-1 flex flex-col min-w-0">
 
       <!-- Sticky Top Bar (Desktop & Mobile) with Prominent End-of-Day Check-In CTA -->
-      <header class="sticky top-0 z-30 bg-slate-950/85 backdrop-blur-lg border-b border-slate-800/90 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+      <header class="jeetrack-topbar sticky top-0 z-30 bg-slate-950/85 backdrop-blur-lg border-b border-slate-800/90 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
         <!-- Mobile Brand / Desktop Page Title -->
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="lg:hidden w-9 h-9 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-slate-950 shadow-md shadow-sky-500/20 shrink-0">
@@ -287,7 +335,8 @@
       </header>
 
       <!-- Main Scrollable Viewport -->
-      <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 pb-28 lg:pb-12">
+      <main class="jeetrack-content flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 pb-28 lg:pb-12">
+        <h1 class="sr-only">JEETrack JEE Main 2027 study planner</h1>
 
         <!-- =================================================================== -->
         <!-- TAB 1: MAIN DASHBOARD VIEW                                          -->
@@ -482,9 +531,9 @@
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div class="relative sm:col-span-2">
                   <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                  <input id="breakdown-search" type="text" placeholder="Filter by chapter name, unit, or date (e.g. Electrostatics, Dec 10)..." class="w-full pl-10 pr-3 py-2.5 rounded-xl text-sm bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              <input id="breakdown-search" type="text" aria-label="Filter schedule by chapter, unit, or date" placeholder="Filter by chapter name, unit, or date (e.g. Electrostatics, Dec 10)..." class="w-full pl-10 pr-3 py-2.5 rounded-xl text-sm bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
                 </div>
-                <select id="breakdown-status-filter" class="px-3 py-2.5 rounded-xl text-sm font-semibold bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <select id="breakdown-status-filter" aria-label="Filter schedule by status" class="px-3 py-2.5 rounded-xl text-sm font-semibold bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
                   <option value="ALL">All Day Statuses</option>
                   <option value="Completed">Completed Days</option>
                   <option value="In Progress">In Progress Days</option>
@@ -526,7 +575,7 @@
 
             <div class="relative">
               <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-              <input id="syllabus-search-input" type="text" placeholder="Search chapter name, unit number, or target date..." class="w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              <input id="syllabus-search-input" type="text" aria-label="Search syllabus by chapter, unit, or date" placeholder="Search chapter name, unit number, or target date..." class="w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
             </div>
           </div>
 
@@ -561,7 +610,7 @@
             </div>
 
             <div class="flex flex-col sm:flex-row gap-2.5">
-              <input id="sync-room-input" type="text" placeholder="e.g. my-jee-2027-room" class="flex-1 px-4 py-3 rounded-xl text-sm font-mono font-semibold bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              <input id="sync-room-input" type="text" aria-label="Sync room ID" placeholder="e.g. my-jee-2027-room" class="flex-1 px-4 py-3 rounded-xl text-sm font-mono font-semibold bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
               <button id="join-room-btn" class="px-5 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs sm:text-sm active:scale-95 transition">Connect Sync Room</button>
               <button id="gen-room-btn" class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm active:scale-95 transition">Generate ID</button>
               <button id="leave-room-btn" class="hidden px-4 py-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold text-xs sm:text-sm active:scale-95 transition">Disconnect</button>
@@ -678,6 +727,7 @@
                     <span>Enter the same <strong>Sync Room ID</strong> on both phone &amp; laptop, and import the <strong>.ics file</strong> for 118 native alarms.</span>
                   </li>
                 </ol>
+                <p class="text-sm text-slate-400">Prefer a compact layout? <a href="./app.html" class="font-semibold text-sky-300 underline underline-offset-4">Open the mobile version</a>.</p>
               </div>
 
               <!-- Backup Export / Import -->
@@ -702,7 +752,7 @@
   </div>
 
   <!-- Mobile Bottom Navigation Bar (Native App Feel) -->
-  <nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-lg border-t border-slate-800 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+  <nav aria-label="Main navigation" class="jeetrack-mobile-nav lg:hidden fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-lg border-t border-slate-800 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
     <div class="grid grid-cols-3 h-16 max-w-lg mx-auto px-2">
       <button data-tab="dashboard" class="nav-btn-mobile flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition">
         <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
@@ -723,9 +773,24 @@
   <!-- APPLICATION LOGIC + FIREBASE FIRESTORE REAL-TIME SYNC                     -->
   <!-- ========================================================================= -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+    let initializeApp, getAuth, signInAnonymously, signInWithCustomToken;
+    let getFirestore, doc, setDoc, onSnapshot;
+
+    async function loadFirebaseSdk() {
+      const [appSdk, authSdk, firestoreSdk] = await Promise.all([
+        import("https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js"),
+        import("https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js"),
+        import("https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js")
+      ]);
+      initializeApp = appSdk.initializeApp;
+      getAuth = authSdk.getAuth;
+      signInAnonymously = authSdk.signInAnonymously;
+      signInWithCustomToken = authSdk.signInWithCustomToken;
+      getFirestore = firestoreSdk.getFirestore;
+      doc = firestoreSdk.doc;
+      setDoc = firestoreSdk.setDoc;
+      onSnapshot = firestoreSdk.onSnapshot;
+    }
 
     /* -------------------------------------------------------------------------
        1. EXACT 59-DAY SCHEDULE (NOV 24, 2026 – JAN 21, 2027) WITH SYLLABUS LINKS
@@ -1251,6 +1316,7 @@
       renderAll();
 
       try {
+        await loadFirebaseSdk();
         const cfg = (typeof __firebase_config !== "undefined" && __firebase_config)
           ? (typeof __firebase_config === "string" ? JSON.parse(__firebase_config) : __firebase_config)
           : FIREBASE_CONFIG;
@@ -1278,8 +1344,8 @@
         }
       } catch (err) {
         console.error("Firebase initialization failed:", err);
-        updateSyncUI("error", "Auth Error");
-        document.getElementById("full-user-id").textContent = `Error: ${err.code || err.message}`;
+        updateSyncUI("offline", "Local Mode");
+        document.getElementById("full-user-id").textContent = "Saved on this device";
       }
     }
 
@@ -1420,7 +1486,7 @@
 
       // Chart.js Stacked Bar Chart
       const ctx = document.getElementById("schedule-stacked-chart");
-      if (ctx) {
+      if (ctx && typeof window.Chart === "function") {
         if (stackedChart) stackedChart.destroy();
         stackedChart = new Chart(ctx, {
           type: "bar",
@@ -1740,7 +1806,7 @@
       if (state.activeTab === "dashboard") renderDashboard();
       else if (state.activeTab === "syllabus") renderSyllabusView();
       else if (state.activeTab === "sync") renderSyncView();
-      lucide.createIcons();
+      if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
     }
 
     /* -------------------------------------------------------------------------
@@ -1798,7 +1864,7 @@
         `;
       }).join("");
 
-      lucide.createIcons();
+      if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
     }
 
     function openCheckinModal(dateStr) {
@@ -2049,6 +2115,7 @@
 
       document.querySelectorAll(".nav-btn-desktop").forEach((btn) => {
         const active = btn.dataset.tab === tab;
+        if (active) btn.setAttribute("aria-current", "page"); else btn.removeAttribute("aria-current");
         btn.className = `nav-btn-desktop w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition ${active
           ? "bg-sky-500 text-slate-950 shadow-lg shadow-sky-500/25"
           : "text-slate-400 hover:bg-slate-800/80 hover:text-white"}`;
@@ -2056,6 +2123,7 @@
 
       document.querySelectorAll(".nav-btn-mobile").forEach((btn) => {
         const active = btn.dataset.tab === tab;
+        if (active) btn.setAttribute("aria-current", "page"); else btn.removeAttribute("aria-current");
         btn.className = `nav-btn-mobile flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition ${active
           ? "text-sky-400"
           : "text-slate-500"}`;
@@ -2104,7 +2172,7 @@
         if (idx > 0) {
           state.selectedDate = SCHEDULE_DATA[idx - 1].date;
           renderTodaysMission();
-          lucide.createIcons();
+          if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
         }
       });
 
@@ -2113,14 +2181,14 @@
         if (idx < SCHEDULE_DATA.length - 1) {
           state.selectedDate = SCHEDULE_DATA[idx + 1].date;
           renderTodaysMission();
-          lucide.createIcons();
+          if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
         }
       });
 
       document.getElementById("mission-today-btn").addEventListener("click", () => {
         state.selectedDate = getClampedTodayDate();
         renderTodaysMission();
-        lucide.createIcons();
+        if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
         showToast("Jumped to today's mission!", "info");
       });
 
@@ -2150,7 +2218,7 @@
         if (!chip) return;
         state.weekFilter = chip.dataset.week;
         renderBreakdownList();
-        lucide.createIcons();
+        if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
       });
 
       document.getElementById("breakdown-search").addEventListener("input", (e) => {
