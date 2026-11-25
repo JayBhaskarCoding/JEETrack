@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0B1120" />
+  <title>JEETrack Mobile</title>
+  <style>
+    :root {
+      --bg: #0B1120;
+      --surface: #121A2B;
+      --card: #1E2434;
+      --card-2: #252D42;
+      --border: rgba(148, 163, 184, 0.14);
+      --border-strong: rgba(148, 163, 184, 0.24);
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+      --indigo: #4F46E5;
+      --indigo-soft: rgba(79, 70, 229, 0.18);
+      --sky: #38BDF8;
+      --sky-soft: rgba(56, 189, 248, 0.14);
+      --green: #34D399;
+      --green-soft: rgba(52, 211, 153, 0.16);
+      --amber: #FBBF24;
+      --amber-soft: rgba(251, 191, 36, 0.16);
+      --rose: #FB7185;
+      --rose-soft: rgba(251, 113, 133, 0.16);
+      --violet: #A78BFA;
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    input, textarea, select, code {
+      user-select: text;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      line-height: 1.4;
+      overscroll-behavior-y: contain;
+      touch-action: manipulation;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      padding-bottom: calc(92px + env(safe-area-inset-bottom));
+    }
+
+    /* Sticky Glass App Bar */
+    .app-bar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(11, 17, 32, 0.84);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, #38BDF8, #4F46E5);
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 14px;
+      color: #FFFFFF;
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sync-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--amber);
+      flex-shrink: 0;
+    }
+    .dot.synced { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .dot.saving { background: var(--sky); }
+    .dot.error { background: var(--rose); }
+
+    .countdown-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--indigo-soft);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      color: #C7D2FE;
+      font-size: 11.5px;
+      font-weight: 800;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    main {
+      padding: 14px 14px 18px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .view { display: none; animation: fadeIn 0.16s ease; }
+    .view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 15px;
+      margin-bottom: 12px;
+    }
+
+    .card-soft {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Hero Today Card */
+    .today-hero {
+      background: linear-gradient(145deg, rgba(79, 70, 229, 0.22), rgba(30, 36, 52, 0.96) 62%);
+      border: 1px solid rgba(99, 102, 241, 0.32);
+      border-radius: 22px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .day-switcher {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid var(--border-strong);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .icon-btn:active { transform: scale(0.93); }
+    .icon-btn:disabled { opacity: 0.35; }
+
+    .day-center {
+      text-align: center;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .day-center h2 {
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: -0.2px;
+    }
+
+    .day-center p {
+      font-size: 11.5px;
+      color: #CBD5E1;
+      margin-top: 2px;
+    }
+
+    .hero-ring-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(11, 17, 32, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .ring-wrap {
+      position: relative;
+      width: 62px;
+      height: 62px;
+      flex-shrink: 0;
+    }
+
+    .ring-wrap svg {
+      width: 62px;
+      height: 62px;
+      transform: rotate(-90deg);
+    }
+
+    .ring-label {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .hero-stats {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .mini-stat {
+      text-align: center;
+    }
+    .mini-stat strong {
+      display: block;
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text);
+    }
+    .mini-stat span {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* Subject Action Cards */
+    .subj-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      transition: border-color 0.18s ease, transform 0.1s ease;
+    }
+    .subj-card.is-done {
+      border-color: rgba(52, 211, 153, 0.42);
+      background: linear-gradient(180deg, rgba(52, 211, 153, 0.08), var(--card));
+    }
+    .subj-card.is-prog {
+      border-color: rgba(251, 191, 36, 0.42);
+    }
+
+    .subj-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .tag {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 9px;
+      border-radius: 8px;
+    }
+    .tag-m { background: var(--sky-soft); color: var(--sky); }
+    .tag-p { background: rgba(167, 139, 250, 0.16); color: var(--violet); }
+    .tag-c { background: var(--green-soft); color: var(--green); }
+    .tag-poc { background: var(--green-soft); color: var(--green); }
+    .tag-ioc { background: var(--amber-soft); color: var(--amber); }
+    .tag-oc { background: var(--rose-soft); color: var(--rose); }
+
+    .slot-txt {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .subj-topic {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .status-tap-btn {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 13px;
+      border: 1px solid transparent;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .status-tap-btn:active { transform: scale(0.98); }
+    .st-Pending {
+      background: rgba(15, 23, 42, 0.8);
+      border-color: var(--border-strong);
+      color: #CBD5E1;
+    }
+    .st-InProgress {
+      background: var(--amber-soft);
+      border-color: rgba(251, 191, 36, 0.45);
+      color: var(--amber);
+    }
+    .st-Completed {
+      background: var(--green);
+      color: #052E16;
+    }
+
+    /* Buttons */
+    .btn {
+      border: none;
+      border-radius: 13px;
+      padding: 12px 15px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, #38BDF8, #4F46E5);
+      color: #FFFFFF;
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+    }
+    .btn-green { background: var(--green); color: #052E16; }
+    .btn-ghost {
+      background: var(--card-2);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+    }
+    .btn-danger {
+      background: var(--rose-soft);
+      color: var(--rose);
+      border: 1px solid rgba(251, 113, 133, 0.35);
+    }
+    .btn-sm { padding: 8px 12px; font-size: 12px; border-radius: 10px; }
+    .btn-full { width: 100%; }
+
+    /* Focus Timer Compact Bar */
+    .timer-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .timer-digits {
+      font-size: 26px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: var(--sky);
+      line-height: 1.1;
+    }
+
+    /* Horizontal Filter Chips */
+    .chips {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      scrollbar-width: none;
+    }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip {
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .chip.active {
+      background: var(--indigo);
+      border-color: #818CF8;
+      color: #FFFFFF;
+    }
+
+    /* Search & Inputs */
+    .input, select, textarea {
+      width: 100%;
+      background: #0F172A;
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+      border-radius: 13px;
+      padding: 11px 13px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--sky);
+    }
+    .field-label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--muted);
+      margin: 10px 0 5px;
+    }
+
+    /* Plan Timeline Cards */
+    .plan-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 13px;
+      margin-bottom: 10px;
+    }
+    .plan-card.is-today {
+      border-color: var(--sky);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35);
+    }
+    .plan-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 9px;
+    }
+    .plan-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 0;
+      border-top: 1px dashed rgba(148, 163, 184, 0.14);
+      font-size: 12.5px;
+    }
+    .mini-pill {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+
+    /* Syllabus Cards */
+    .syl-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 13px;
+      margin-bottom: 9px;
+    }
+    .syl-card.mastered {
+      border-color: rgba(52, 211, 153, 0.45);
+      background: linear-gradient(180deg, rgba(52, 211, 153, 0.06), var(--card));
+    }
+    .syl-checks {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-top: 10px;
+    }
+    .syl-btn {
+      padding: 9px 6px;
+      border-radius: 11px;
+      background: #0F172A;
+      border: 1px solid var(--border-strong);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-align: center;
+      cursor: pointer;
+    }
+    .syl-btn.done {
+      background: var(--sky);
+      border-color: var(--sky);
+      color: #082F49;
+    }
+
+    /* Progress Bars & Grid */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kpi-tile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 12px;
+    }
+    .kpi-tile small { font-size: 10.5px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+    .kpi-tile strong { display: block; font-size: 22px; font-weight: 900; margin-top: 3px; }
+    .kpi-tile span { font-size: 11px; color: var(--muted); }
+
+    .pbar-row { margin-bottom: 11px; }
+    .pbar-meta { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+    .pbar-track { height: 9px; border-radius: 99px; background: #0F172A; overflow: hidden; }
+    .pbar-fill { height: 100%; border-radius: 99px; transition: width 0.35s ease; }
+
+    /* Floating Check-In Pill (visible on Today tab) */
+    .fab-checkin {
+      position: fixed;
+      right: 16px;
+      bottom: calc(82px + env(safe-area-inset-bottom));
+      z-index: 35;
+      padding: 13px 18px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #38BDF8, #4F46E5);
+      color: #FFFFFF;
+      border: none;
+      font-size: 13px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 10px 26px rgba(79, 70, 229, 0.5);
+      cursor: pointer;
+    }
+    .fab-checkin:active { transform: scale(0.95); }
+
+    /* Glassmorphic Bottom Nav Bar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 7px 8px calc(9px + env(safe-area-inset-bottom));
+    }
+
+    .nav-item {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 4px;
+      border-radius: 13px;
+      font-size: 10.5px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .nav-item svg { width: 21px; height: 21px; stroke-width: 2.1; }
+    .nav-item.active {
+      color: var(--sky);
+      background: var(--sky-soft);
+    }
+
+    /* Slide-Up Bottom Sheet Modal */
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(2, 6, 23, 0.78);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .sheet-backdrop.open { display: flex; }
+    .sheet {
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-top: 1px solid var(--border-strong);
+      border-radius: 26px 26px 0 0;
+      padding: 12px 16px calc(18px + env(safe-area-inset-bottom));
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(40px); opacity: 0.4; } to { transform: translateY(0); opacity: 1; } }
+    .sheet-handle {
+      width: 42px;
+      height: 5px;
+      border-radius: 99px;
+      background: rgba(148, 163, 184, 0.35);
+      margin: 0 auto 12px;
+    }
+    .chk-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      margin-bottom: 9px;
+      cursor: pointer;
+    }
+    .chk-row input {
+      width: 21px;
+      height: 21px;
+      margin-top: 2px;
+      accent-color: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 66px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 90;
+      max-width: calc(100vw - 28px);
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: #38BDF8;
+      color: #082F49;
+      font-size: 12.5px;
+      font-weight: 800;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+      display: none;
+      text-align: center;
+    }
+    .toast.success { background: var(--green); color: #052E16; }
+    .toast.error { background: var(--rose); color: #FFFFFF; }
+    .toast.warn { background: var(--amber); color: #451A03; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Native App Bar -->
+  <header class="app-bar">
+    <div class="brand">
+      <div class="brand-mark">JT</div>
+      <div style="min-width:0;">
+        <div class="brand-title">JEETrack</div>
+        <div class="sync-row">
+          <span id="sync-dot" class="dot"></span>
+          <span id="sync-label">Connecting...</span>
+        </div>
+      </div>
+    </div>
+    <div class="countdown-pill" id="top-countdown">--d to JEE</div>
+  </header>
+
+  <main>
+    <!-- ==================== TAB 1: TODAY ==================== -->
+    <section id="view-today" class="view active">
+      <div class="today-hero" id="swipe-area">
+        <div class="day-switcher">
+          <button class="icon-btn" id="prev-day-btn" aria-label="Previous day">‹</button>
+          <div class="day-center" id="jump-today-tap">
+            <h2 id="today-heading">Day 1 · Nov 24</h2>
+            <p id="today-sub">Week 1 • Tap here for Today</p>
+          </div>
+          <button class="icon-btn" id="next-day-btn" aria-label="Next day">›</button>
+        </div>
+
+        <div class="hero-ring-row">
+          <div class="ring-wrap">
+            <svg viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(148,163,184,0.18)" stroke-width="6"></circle>
+              <circle id="day-ring" cx="32" cy="32" r="26" fill="none" stroke="#34D399" stroke-width="6" stroke-linecap="round" stroke-dasharray="163.36" stroke-dashoffset="163.36"></circle>
+            </svg>
+            <div class="ring-label" id="day-ring-text">0/3</div>
+          </div>
+          <div class="hero-stats">
+            <div class="mini-stat">
+              <strong id="hero-pyqs" style="color:var(--sky);">0</strong>
+              <span>PYQs Today</span>
+            </div>
+            <div class="mini-stat">
+              <strong id="hero-streak" style="color:var(--amber);">0d</strong>
+              <span>Streak</span>
+            </div>
+            <div class="mini-stat">
+              <strong id="hero-syl-days" style="color:var(--green);">--d</strong>
+              <span>To Jan 7</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's 3 Subject Cards -->
+      <div class="section-head">
+        <span class="section-title">Today's Chapters (Tap to Cycle)</span>
+        <span style="font-size:11px;color:var(--muted);" id="swipe-hint">Swipe ‹ ›</span>
+      </div>
+      <div id="today-subjects"></div>
+
+      <!-- Compact Study Timer -->
+      <div class="card timer-card">
+        <div>
+          <div style="font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:0.4px;">FOCUS TIMER</div>
+          <div class="timer-digits" id="timer-display">50:00</div>
+        </div>
+        <div style="display:flex;gap:7px;">
+          <button class="btn btn-ghost btn-sm" id="timer-mode-btn">50m</button>
+          <button class="btn btn-primary btn-sm" id="timer-toggle-btn">Start</button>
+          <button class="btn btn-ghost btn-sm" id="timer-reset-btn">↺</button>
+        </div>
+      </div>
+
+      <!-- Quick Note Preview if Logged -->
+      <div id="today-note-card" class="card-soft" style="display:none;font-size:12.5px;color:#CBD5E1;"></div>
+    </section>
+
+    <!-- ==================== TAB 2: 59-DAY PLAN ==================== -->
+    <section id="view-plan" class="view">
+      <div class="section-head">
+        <span class="section-title">59-Day Study Timeline</span>
+        <span id="plan-count" style="font-size:11.5px;font-weight:700;color:var(--sky);">59 days</span>
+      </div>
+      <div class="chips" id="week-chips"></div>
+      <input type="search" id="plan-search" class="input" placeholder="Search chapter or date (e.g. Electrostatics, Dec 10)..." style="margin-bottom:12px;" />
+      <div id="plan-list"></div>
+    </section>
+
+    <!-- ==================== TAB 3: SYLLABUS (55 UNITS) ==================== -->
+    <section id="view-syllabus" class="view">
+      <div class="section-head">
+        <span class="section-title">JEE Main Syllabus (55 Units)</span>
+        <span id="syl-mastered-badge" style="font-size:11.5px;font-weight:800;color:var(--green);">0 / 55</span>
+      </div>
+      <div class="chips" id="syl-chips"></div>
+      <input type="search" id="syl-search" class="input" placeholder="Search chapter (e.g. Coordination, Optics)..." style="margin-bottom:12px;" />
+      <div id="syl-list"></div>
+    </section>
+
+    <!-- ==================== TAB 4: PROGRESS & ALERTS ==================== -->
+    <section id="view-me" class="view">
+      <!-- KPI Summary -->
+      <div class="grid-2" style="margin-bottom:12px;">
+        <div class="kpi-tile">
+          <small>Schedule Done</small>
+          <strong id="kpi-sched" style="color:var(--sky);">0%</strong>
+          <span id="kpi-sched-sub">0 / 177 targets</span>
+        </div>
+        <div class="kpi-tile">
+          <small>Chapters Mastered</small>
+          <strong id="kpi-mastered" style="color:var(--green);">0 / 55</strong>
+          <span id="kpi-mastered-sub">0% checkpoints</span>
+        </div>
+        <div class="kpi-tile">
+          <small>Total PYQs</small>
+          <strong id="kpi-pyqs" style="color:var(--amber);">0</strong>
+          <span id="kpi-mock">Avg Mock: --/300</span>
+        </div>
+        <div class="kpi-tile">
+          <small>Active Streak</small>
+          <strong id="kpi-streak" style="color:var(--violet);">0d</strong>
+          <span>Keep going!</span>
+        </div>
+      </div>
+
+      <!-- Subject Mastery Bars -->
+      <div class="card">
+        <div class="section-head">
+          <span class="section-title">Subject Mastery</span>
+        </div>
+        <div id="subject-bars"></div>
+      </div>
+
+      <!-- Phone <-> Laptop Sync Room -->
+      <div class="card" style="border-color:rgba(56,189,248,0.32);">
+        <div class="section-head">
+          <span class="section-title" style="color:var(--sky);">Phone ↔ Laptop Sync Room</span>
+          <span id="room-badge" style="font-size:11px;font-weight:800;color:#CBD5E1;">Private</span>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+          Use the exact same Room ID on your laptop website (<b>jaybhaskarcoding.github.io/JEETrack</b>) for instant two-way sync.
+        </p>
+        <input type="text" id="room-input" class="input" placeholder="e.g. jay-jee27-k9x4" style="font-family:monospace;font-weight:700;margin-bottom:9px;" />
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" style="flex:1;" id="connect-room-btn">Connect Room</button>
+          <button class="btn btn-ghost btn-sm" id="gen-room-btn">Generate</button>
+          <button class="btn btn-danger btn-sm" id="leave-room-btn" style="display:none;">Leave</button>
+        </div>
+        <div style="margin-top:10px;padding:9px 11px;border-radius:11px;background:#0F172A;font-size:11px;color:var(--muted);word-break:break-all;">
+          Device UID: <code id="uid-text" style="color:#CBD5E1;">Authenticating...</code>
+        </div>
+      </div>
+
+      <!-- Native Android Daily Alerts -->
+      <div class="card">
+        <div class="section-head">
+          <span class="section-title" style="color:var(--green);">Daily Study Reminders</span>
+          <span id="alarm-mode-badge" style="font-size:11px;font-weight:800;color:var(--green);">Android Alarms</span>
+        </div>
+        <div class="grid-2" style="margin-bottom:10px;">
+          <div>
+            <label class="field-label" style="margin-top:0;">Morning Briefing</label>
+            <input type="time" id="morning-time" class="input" value="07:00" />
+          </div>
+          <div>
+            <label class="field-label" style="margin-top:0;">Evening Check-In</label>
+            <input type="time" id="evening-time" class="input" value="21:30" />
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <button class="btn btn-primary btn-sm" style="flex:1;" id="save-alarms-btn">Save Alarm Times</button>
+          <button class="btn btn-ghost btn-sm" id="test-morning-btn">Test Morning</button>
+          <button class="btn btn-ghost btn-sm" id="test-evening-btn">Test Check-In</button>
+        </div>
+        <div id="native-android-tools" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" style="flex:1;" id="exact-alarm-btn">Exact Alarm Access</button>
+          <button class="btn btn-ghost btn-sm" style="flex:1;" id="battery-btn">Battery Unrestricted</button>
+        </div>
+      </div>
+
+      <!-- Exports & Desktop Switch -->
+      <div class="card-soft" style="display:flex;flex-wrap:wrap;gap:8px;">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" id="export-ics-btn">Export 118 .ICS</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1;" id="export-json-btn">Backup JSON</button>
+        <a href="/JEETrack/" class="btn btn-ghost btn-sm" style="text-decoration:none;width:100%;">Switch to Full Desktop Dashboard</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating Check-In Button -->
+  <button class="fab-checkin" id="fab-checkin">✓ Check-In</button>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="today">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <span>Today</span>
+    </button>
+    <button class="nav-item" data-tab="plan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+      <span>Plan</span>
+    </button>
+    <button class="nav-item" data-tab="syllabus">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>
+      <span>Syllabus</span>
+    </button>
+    <button class="nav-item" data-tab="me">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span>Progress</span>
+    </button>
+  </nav>
+
+  <!-- End-of-Day Check-In Bottom Sheet -->
+  <div class="sheet-backdrop" id="checkin-sheet">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="section-head" style="margin-bottom:6px;">
+        <div>
+          <h3 style="font-size:17px;font-weight:900;">End-of-Day Check-In</h3>
+          <p id="sheet-sub" style="font-size:12px;color:var(--sky);font-weight:600;"></p>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="sheet-mark-all">All 3 ✓</button>
+      </div>
+
+      <div id="sheet-subjects" style="margin-top:10px;"></div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">
+        <label style="font-size:11.5px;display:inline-flex;align-items:center;gap:5px;color:#CBD5E1;">
+          <input type="checkbox" id="auto-theory" checked style="accent-color:#38BDF8;" /> Sync Theory
+        </label>
+        <label style="font-size:11.5px;display:inline-flex;align-items:center;gap:5px;color:#CBD5E1;">
+          <input type="checkbox" id="auto-pyqs" checked style="accent-color:#38BDF8;" /> Sync PYQs
+        </label>
+        <label style="font-size:11.5px;display:inline-flex;align-items:center;gap:5px;color:#CBD5E1;">
+          <input type="checkbox" id="auto-rev" style="accent-color:#38BDF8;" /> Sync Revision
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <label class="field-label">PYQs Solved Today</label>
+          <div style="display:flex;gap:6px;">
+            <input type="number" id="sheet-pyqs" class="input" min="0" max="500" placeholder="0" />
+            <button type="button" class="btn btn-ghost btn-sm" id="add-20-pyq">+20</button>
+          </div>
+        </div>
+        <div>
+          <label class="field-label">Mock Score (/300)</label>
+          <input type="number" id="sheet-mock" class="input" min="-75" max="300" placeholder="Optional" />
+        </div>
+      </div>
+
+      <label class="field-label">Mistake Log / Notes</label>
+      <textarea id="sheet-notes" rows="2" placeholder="Tricky formulas or topics to revisit tomorrow..."></textarea>
+
+      <div style="display:flex;gap:9px;margin-top:14px;">
+        <button class="btn btn-ghost" id="sheet-cancel">Cancel</button>
+        <button class="btn btn-green" style="flex:1;" id="sheet-save">Save &amp; Sync Day</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+    const SCHEDULE_DATA = [
+      { dayNum: 1, date: "2026-11-24", dow: "Tue", week: "Week 1", maths: "Sets, Relations & Functions", physics: "Units & Measurements + Experimental Skills", chem: "POC: Some Basic Concepts in Chemistry", links: { maths: ["math-1"], physics: ["phy-1", "phy-20"], chem: ["poc-1"] } },
+      { dayNum: 2, date: "2026-11-25", dow: "Wed", week: "Week 1", maths: "Quadratic Equations & Complex Numbers", physics: "Kinematics (1D & 2D)", chem: "POC: Atomic Structure", links: { maths: ["math-2"], physics: ["phy-2"], chem: ["poc-2"] } },
+      { dayNum: 3, date: "2026-11-26", dow: "Thu", week: "Week 1", maths: "Matrices & Determinants", physics: "Laws of Motion", chem: "IOC: Classification of Elements & Periodicity", links: { maths: ["math-3"], physics: ["phy-3"], chem: ["ioc-9"] } },
+      { dayNum: 4, date: "2026-11-27", dow: "Fri", week: "Week 1", maths: "Matrices & Determinants (Contd.)", physics: "Work, Energy & Power", chem: "IOC/POC: Chemical Bonding & Molecular Structure", links: { maths: ["math-3"], physics: ["phy-4"], chem: ["poc-3"] } },
+      { dayNum: 5, date: "2026-11-28", dow: "Sat", week: "Week 1", maths: "Sequence & Series", physics: "Rotational Motion (Part 1: COM & Torque)", chem: "OC: Purification & Characterisation + GOC (Part 1)", links: { maths: ["math-6"], physics: ["phy-5"], chem: ["oc-13", "oc-14"] } },
+      { dayNum: 6, date: "2026-11-29", dow: "Sun", week: "Week 1", maths: "Weekly Revision + Backlog Clearance", physics: "Weekly Revision + 1 Part-Test", chem: "NCERT Revision (Units 1–3, 9, 13–14)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 7, date: "2026-11-30", dow: "Mon", week: "Week 1", maths: "Permutations & Combinations", physics: "Rotational Motion (Part 2: MOI & Rolling)", chem: "OC: Some Basic Principles of Organic Chemistry (GOC Part 2)", links: { maths: ["math-4"], physics: ["phy-5"], chem: ["oc-14"] } },
+      { dayNum: 8, date: "2026-12-01", dow: "Tue", week: "Week 2", maths: "Binomial Theorem", physics: "Gravitation", chem: "POC: Chemical Thermodynamics", links: { maths: ["math-5"], physics: ["phy-6"], chem: ["poc-4"] } },
+      { dayNum: 9, date: "2026-12-02", dow: "Wed", week: "Week 2", maths: "Trigonometry & Inverse Trig Functions", physics: "Properties of Solids & Liquids (Solids/Fluids)", chem: "POC: Solutions", links: { maths: ["math-14"], physics: ["phy-7"], chem: ["poc-5"] } },
+      { dayNum: 10, date: "2026-12-03", dow: "Thu", week: "Week 2", maths: "Limit, Continuity & Differentiability", physics: "Properties of Solids & Liquids (Thermal/Heat)", chem: "IOC: p-Block Elements (Group 13 & 14)", links: { maths: ["math-7"], physics: ["phy-7"], chem: ["ioc-10"] } },
+      { dayNum: 11, date: "2026-12-04", dow: "Fri", week: "Week 2", maths: "Differentiation & Applications (AOD - Part 1)", physics: "Thermodynamics", chem: "IOC: p-Block Elements (Group 15 to 18)", links: { maths: ["math-7"], physics: ["phy-8"], chem: ["ioc-10"] } },
+      { dayNum: 12, date: "2026-12-05", dow: "Sat", week: "Week 2", maths: "Applications of Derivatives (AOD - Part 2)", physics: "Kinetic Theory of Gases (KTG)", chem: "OC: Hydrocarbons (Alkanes & Alkenes)", links: { maths: ["math-7"], physics: ["phy-9"], chem: ["oc-15"] } },
+      { dayNum: 13, date: "2026-12-06", dow: "Sun", week: "Week 2", maths: "Weekly Revision + Backlog Clearance", physics: "Weekly Revision + 1 Part-Test", chem: "NCERT Revision (Units 4–5, 10, 15)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 14, date: "2026-12-07", dow: "Mon", week: "Week 2", maths: "Indefinite Integration", physics: "Oscillations (SHM)", chem: "OC: Hydrocarbons (Alkynes & Aromatic)", links: { maths: ["math-8"], physics: ["phy-10"], chem: ["oc-15"] } },
+      { dayNum: 15, date: "2026-12-08", dow: "Tue", week: "Week 3", maths: "Definite Integration & Properties", physics: "Waves & Sound", chem: "POC: Equilibrium (Chemical Equilibrium)", links: { maths: ["math-8"], physics: ["phy-10"], chem: ["poc-6"] } },
+      { dayNum: 16, date: "2026-12-09", dow: "Wed", week: "Week 3", maths: "Area Under Curves", physics: "Electrostatics (Coulomb's Law, Field & Gauss)", chem: "POC: Equilibrium (Ionic Equilibrium)", links: { maths: ["math-8"], physics: ["phy-11"], chem: ["poc-6"] } },
+      { dayNum: 17, date: "2026-12-10", dow: "Thu", week: "Week 3", maths: "Differential Equations", physics: "Electrostatics (Potential & Capacitors)", chem: "IOC: d- and f-Block Elements", links: { maths: ["math-9"], physics: ["phy-11"], chem: ["ioc-11"] } },
+      { dayNum: 18, date: "2026-12-11", dow: "Fri", week: "Week 3", maths: "Straight Lines", physics: "Current Electricity (Circuits & Kirchhoff)", chem: "IOC: Coordination Compounds (Part 1)", links: { maths: ["math-10"], physics: ["phy-12"], chem: ["ioc-12"] } },
+      { dayNum: 19, date: "2026-12-12", dow: "Sat", week: "Week 3", maths: "Circles", physics: "Current Electricity (Instruments & Bridges)", chem: "IOC: Coordination Compounds (Part 2)", links: { maths: ["math-10"], physics: ["phy-12"], chem: ["ioc-12"] } },
+      { dayNum: 20, date: "2026-12-13", dow: "Sun", week: "Week 3", maths: "Weekly Revision + Backlog Clearance", physics: "Weekly Revision + 1 Part-Test", chem: "NCERT Revision (Units 6, 11–12)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 21, date: "2026-12-14", dow: "Mon", week: "Week 3", maths: "Conic Sections: Parabola", physics: "Magnetic Effects of Current (Biot-Savart & Ampere)", chem: "OC: Organic Compounds Containing Halogens", links: { maths: ["math-10"], physics: ["phy-13"], chem: ["oc-16"] } },
+      { dayNum: 22, date: "2026-12-15", dow: "Tue", week: "Week 4", maths: "Conic Sections: Ellipse & Hyperbola", physics: "Magnetism & Matter", chem: "POC: Redox Reactions & Electrochemistry (Part 1)", links: { maths: ["math-10"], physics: ["phy-13"], chem: ["poc-7"] } },
+      { dayNum: 23, date: "2026-12-16", dow: "Wed", week: "Week 4", maths: "Vector Algebra (Part 1)", physics: "Electromagnetic Induction (EMI)", chem: "POC: Electrochemistry (Part 2)", links: { maths: ["math-12"], physics: ["phy-14"], chem: ["poc-7"] } },
+      { dayNum: 24, date: "2026-12-17", dow: "Thu", week: "Week 4", maths: "Vector Algebra (Part 2)", physics: "Alternating Current (AC)", chem: "OC: Alcohols, Phenols & Ethers (Part 1)", links: { maths: ["math-12"], physics: ["phy-14"], chem: ["oc-17"] } },
+      { dayNum: 25, date: "2026-12-18", dow: "Fri", week: "Week 4", maths: "Three-Dimensional Geometry (Lines & Angles)", physics: "Electromagnetic Waves", chem: "OC: Alcohols, Phenols & Ethers (Part 2)", links: { maths: ["math-11"], physics: ["phy-15"], chem: ["oc-17"] } },
+      { dayNum: 26, date: "2026-12-19", dow: "Sat", week: "Week 4", maths: "Three-Dimensional Geometry (Skew Lines & Distance)", physics: "Ray Optics (Reflection & Refraction)", chem: "OC: Aldehydes & Ketones", links: { maths: ["math-11"], physics: ["phy-16"], chem: ["oc-17"] } },
+      { dayNum: 27, date: "2026-12-20", dow: "Sun", week: "Week 4", maths: "Weekly Revision + Backlog Clearance", physics: "Weekly Revision + 1 Full-Length Mock", chem: "NCERT Revision (Units 7, 16–17)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 28, date: "2026-12-21", dow: "Mon", week: "Week 4", maths: "Statistics", physics: "Ray Optics (Prisms & Optical Instruments)", chem: "OC: Carboxylic Acids", links: { maths: ["math-13"], physics: ["phy-16"], chem: ["oc-17"] } },
+      { dayNum: 29, date: "2026-12-22", dow: "Tue", week: "Week 5", maths: "Probability (Conditional & Bayes' Theorem)", physics: "Wave Optics (Interference & YDSE)", chem: "POC: Chemical Kinetics (Part 1)", links: { maths: ["math-13"], physics: ["phy-16"], chem: ["poc-8"] } },
+      { dayNum: 30, date: "2026-12-23", dow: "Wed", week: "Week 5", maths: "Probability (Distributions)", physics: "Wave Optics (Diffraction & Polarization)", chem: "POC: Chemical Kinetics (Part 2)", links: { maths: ["math-13"], physics: ["phy-16"], chem: ["poc-8"] } },
+      { dayNum: 31, date: "2026-12-24", dow: "Thu", week: "Week 5", maths: "Maths Consolidation: Calculus Mixed PYQs", physics: "Dual Nature of Matter & Radiation", chem: "OC: Organic Compounds Containing Nitrogen (Amines)", links: { maths: ["math-7", "math-8"], physics: ["phy-17"], chem: ["oc-18"] } },
+      { dayNum: 32, date: "2026-12-25", dow: "Fri", week: "Week 5", maths: "Maths Consolidation: Coordinate Geometry PYQs", physics: "Atoms", chem: "OC: Diazonium Salts & Biomolecules (Part 1)", links: { maths: ["math-10"], physics: ["phy-18"], chem: ["oc-18", "oc-19"] } },
+      { dayNum: 33, date: "2026-12-26", dow: "Sat", week: "Week 5", maths: "Maths Consolidation: Vectors & 3D PYQs", physics: "Nuclei", chem: "OC: Biomolecules (Part 2)", links: { maths: ["math-11", "math-12"], physics: ["phy-18"], chem: ["oc-19"] } },
+      { dayNum: 34, date: "2026-12-27", dow: "Sun", week: "Week 5", maths: "Weekly Revision + Backlog Clearance", physics: "Weekly Revision + 1 Full-Length Mock", chem: "NCERT Revision (Units 8, 18–19)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 35, date: "2026-12-28", dow: "Mon", week: "Week 5", maths: "Maths Consolidation: Algebra Mixed PYQs", physics: "Electronic Devices (Semiconductors & Logic Gates)", chem: "IOC/OC: Practical Chemistry (Salt Analysis & Organic Tests)", links: { maths: [], physics: ["phy-19"], chem: ["ioc-20", "oc-20"] } },
+      { dayNum: 36, date: "2026-12-29", dow: "Tue", week: "Week 6", maths: "Dedicated Buffer Day: Spilled-over Maths Topics", physics: "Dedicated Buffer Day: Spilled-over Physics Topics", chem: "Dedicated Buffer Day: Spilled-over Chemistry Topics", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 37, date: "2026-12-30", dow: "Wed", week: "Week 6", maths: "Dedicated Buffer Day: Spilled-over Maths Topics", physics: "Dedicated Buffer Day: Spilled-over Physics Topics", chem: "Dedicated Buffer Day: Spilled-over Chemistry Topics", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 38, date: "2026-12-31", dow: "Thu", week: "Week 6", maths: "Dedicated Buffer Day: Final Syllabus Lock-in", physics: "Dedicated Buffer Day: Final Syllabus Lock-in", chem: "Dedicated Buffer Day: Final Syllabus Lock-in", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 39, date: "2027-01-01", dow: "Fri", week: "Week 6", maths: "Top 50 NTA 2025/2026 PYQs (Algebra & Calculus)", physics: "Rapid Formula Sweep + Top 50 NTA PYQs", chem: "NCERT Highlighted Lines Sweep (IOC)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 40, date: "2027-01-02", dow: "Sat", week: "Week 6", maths: "Top 50 NTA 2025/2026 PYQs (Conics & Vectors/3D)", physics: "Rapid Formula Sweep + Top 50 NTA PYQs", chem: "NCERT Highlighted Lines Sweep (OC)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 41, date: "2027-01-03", dow: "Sun", week: "Week 6", maths: "Weak Chapter Drill & Formula Sheet Review", physics: "Weak Chapter Drill & Formula Sheet Review", chem: "Physical Chemistry Formula & Numerical Sweep", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 42, date: "2027-01-04", dow: "Mon", week: "Week 6", maths: "Full-Length Mock Test #1 (Exam Shift Timing)", physics: "Full-Length Mock Test #1 (Exam Shift Timing)", chem: "Full-Length Mock Test #1 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 43, date: "2027-01-05", dow: "Tue", week: "Week 6", maths: "Mock #1 Deep Error-Log Analysis (Maths)", physics: "Mock #1 Deep Error-Log Analysis (Physics)", chem: "Mock #1 Deep Error-Log Analysis (Chemistry)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 44, date: "2027-01-06", dow: "Wed", week: "Week 6", maths: "Full-Length Mock Test #2 (Exam Shift Timing)", physics: "Full-Length Mock Test #2 (Exam Shift Timing)", chem: "Full-Length Mock Test #2 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 45, date: "2027-01-07", dow: "Thu", week: "Week 6", maths: "Mock #2 Deep Error-Log Analysis (Maths)", physics: "Mock #2 Deep Error-Log Analysis (Physics)", chem: "Mock #2 Deep Error-Log Analysis (Chemistry)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 46, date: "2027-01-08", dow: "Fri", week: "Phase 2 Buffer", maths: "Full-Length Mock Test #3 (Exam Shift Timing)", physics: "Full-Length Mock Test #3 (Exam Shift Timing)", chem: "Full-Length Mock Test #3 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 47, date: "2027-01-09", dow: "Sat", week: "Phase 2 Buffer", maths: "Mock #3 Error Analysis + Weak Topic Patching", physics: "Mock #3 Error Analysis + Weak Topic Patching", chem: "Mock #3 Error Analysis + Weak Topic Patching", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 48, date: "2027-01-10", dow: "Sun", week: "Phase 2 Buffer", maths: "Full-Length Mock Test #4 (Exam Shift Timing)", physics: "Full-Length Mock Test #4 (Exam Shift Timing)", chem: "Full-Length Mock Test #4 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 49, date: "2027-01-11", dow: "Mon", week: "Phase 2 Buffer", maths: "Mock #4 Error Analysis + Weak Topic Patching", physics: "Mock #4 Error Analysis + Weak Topic Patching", chem: "Mock #4 Error Analysis + Weak Topic Patching", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 50, date: "2027-01-12", dow: "Tue", week: "Phase 2 Buffer", maths: "Full-Length Mock Test #5 (Exam Shift Timing)", physics: "Full-Length Mock Test #5 (Exam Shift Timing)", chem: "Full-Length Mock Test #5 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 51, date: "2027-01-13", dow: "Wed", week: "Phase 2 Buffer", maths: "Mock #5 Error Analysis + Weak Topic Patching", physics: "Mock #5 Error Analysis + Weak Topic Patching", chem: "Mock #5 Error Analysis + Weak Topic Patching", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 52, date: "2027-01-14", dow: "Thu", week: "Phase 2 Buffer", maths: "Full-Length Mock Test #6 (Exam Shift Timing)", physics: "Full-Length Mock Test #6 (Exam Shift Timing)", chem: "Full-Length Mock Test #6 (Exam Shift Timing)", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 53, date: "2027-01-15", dow: "Fri", week: "Phase 2 Buffer", maths: "Mock #6 Error Analysis + Weak Topic Patching", physics: "Mock #6 Error Analysis + Weak Topic Patching", chem: "Mock #6 Error Analysis + Weak Topic Patching", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 54, date: "2027-01-16", dow: "Sat", week: "Phase 2 Buffer", maths: "Final Pass: Algebra & Trigonometry Short Notes", physics: "Final Pass: Mechanics & Thermodynamics Formulas", chem: "Final Pass: IOC Periodic, Bonding & p/d/f-Block Trends", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 55, date: "2027-01-17", dow: "Sun", week: "Phase 2 Buffer", maths: "Final Pass: Calculus Short Notes & Standard Integrals", physics: "Final Pass: Electrodynamics Formulas", chem: "Final Pass: Coordination Compounds & Salt Analysis", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 56, date: "2027-01-18", dow: "Mon", week: "Phase 2 Buffer", maths: "Final Pass: Coordinate Geometry & Vectors/3D Notes", physics: "Final Pass: Optics & Modern Physics Formulas", chem: "Final Pass: OC Named Reactions, Reagents & Biomolecules", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 57, date: "2027-01-19", dow: "Tue", week: "Phase 2 Buffer", maths: "Mistake Notebook Review (All Maths Traps)", physics: "Mistake Notebook Review (All Physics Traps)", chem: "Final Pass: Physical Chemistry Formulas & Graphs", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 58, date: "2027-01-20", dow: "Wed", week: "Phase 2 Buffer", maths: "Light Formula Glance Only (No Heavy Solving)", physics: "Light Formula Glance Only (No Heavy Solving)", chem: "Light NCERT Flashcard Glance Only", links: { maths: [], physics: [], chem: [] } },
+      { dayNum: 59, date: "2027-01-21", dow: "Thu", week: "Phase 2 Buffer", maths: "Rest, Sleep Cycle Alignment & Admit Card Prep", physics: "Rest, Sleep Cycle Alignment & Admit Card Prep", chem: "Rest, Sleep Cycle Alignment & Admit Card Prep", links: { maths: [], physics: [], chem: [] } }
+    ];
+
+    const SYLLABUS_DATA = [
+      { id: "poc-1", subject: "POC", unit: "Unit 1", name: "Some Basic Concepts in Chemistry", target: "Nov 24" },
+      { id: "poc-2", subject: "POC", unit: "Unit 2", name: "Atomic Structure", target: "Nov 25" },
+      { id: "poc-3", subject: "POC", unit: "Unit 3", name: "Chemical Bonding and Molecular Structure", target: "Nov 27" },
+      { id: "poc-4", subject: "POC", unit: "Unit 4", name: "Chemical Thermodynamics", target: "Dec 01" },
+      { id: "poc-5", subject: "POC", unit: "Unit 5", name: "Solutions", target: "Dec 02" },
+      { id: "poc-6", subject: "POC", unit: "Unit 6", name: "Equilibrium", target: "Dec 08 – Dec 09" },
+      { id: "poc-7", subject: "POC", unit: "Unit 7", name: "Redox Reactions and Electrochemistry", target: "Dec 15 – Dec 16" },
+      { id: "poc-8", subject: "POC", unit: "Unit 8", name: "Chemical Kinetics", target: "Dec 22 – Dec 23" },
+      { id: "ioc-9", subject: "IOC", unit: "Unit 9", name: "Classification of Elements and Periodicity in Properties", target: "Nov 26" },
+      { id: "ioc-10", subject: "IOC", unit: "Unit 10", name: "p-Block Elements (Group 13 to Group 18)", target: "Dec 03 – Dec 04" },
+      { id: "ioc-11", subject: "IOC", unit: "Unit 11", name: "d- and f-Block Elements", target: "Dec 10" },
+      { id: "ioc-12", subject: "IOC", unit: "Unit 12", name: "Coordination Compounds", target: "Dec 11 – Dec 12" },
+      { id: "ioc-20", subject: "IOC", unit: "Unit 20 (Part)", name: "Principles Related to Practical Chemistry (Inorganic Salt Analysis & Volumetric Titrations)", target: "Dec 28" },
+      { id: "oc-13", subject: "OC", unit: "Unit 13", name: "Purification and Characterisation of Organic Compounds", target: "Nov 28" },
+      { id: "oc-14", subject: "OC", unit: "Unit 14", name: "Some Basic Principles of Organic Chemistry (GOC)", target: "Nov 28 – Nov 30" },
+      { id: "oc-15", subject: "OC", unit: "Unit 15", name: "Hydrocarbons", target: "Dec 05 – Dec 07" },
+      { id: "oc-16", subject: "OC", unit: "Unit 16", name: "Organic Compounds Containing Halogens", target: "Dec 14" },
+      { id: "oc-17", subject: "OC", unit: "Unit 17", name: "Organic Compounds Containing Oxygen (Alcohols, Phenols, Ethers, Aldehydes, Ketones, Carboxylic Acids)", target: "Dec 17 – Dec 21" },
+      { id: "oc-18", subject: "OC", unit: "Unit 18", name: "Organic Compounds Containing Nitrogen (Amines & Diazonium Salts)", target: "Dec 24 – Dec 25" },
+      { id: "oc-19", subject: "OC", unit: "Unit 19", name: "Biomolecules", target: "Dec 25 – Dec 26" },
+      { id: "oc-20", subject: "OC", unit: "Unit 20 (Part)", name: "Principles Related to Practical Chemistry (Organic Functional Group Tests & Preparations)", target: "Dec 28" },
+      { id: "math-1", subject: "Mathematics", unit: "Unit 1", name: "Sets, Relations and Functions", target: "Nov 24" },
+      { id: "math-2", subject: "Mathematics", unit: "Unit 2", name: "Complex Numbers and Quadratic Equations", target: "Nov 25" },
+      { id: "math-3", subject: "Mathematics", unit: "Unit 3", name: "Matrices and Determinants", target: "Nov 26 – Nov 27" },
+      { id: "math-4", subject: "Mathematics", unit: "Unit 4", name: "Permutations and Combinations", target: "Nov 30" },
+      { id: "math-5", subject: "Mathematics", unit: "Unit 5", name: "Binomial Theorem and its Simple Applications", target: "Dec 01" },
+      { id: "math-6", subject: "Mathematics", unit: "Unit 6", name: "Sequence and Series", target: "Nov 28" },
+      { id: "math-7", subject: "Mathematics", unit: "Unit 7", name: "Limit, Continuity and Differentiability", target: "Dec 03 – Dec 05" },
+      { id: "math-8", subject: "Mathematics", unit: "Unit 8", name: "Integral Calculus", target: "Dec 07 – Dec 09" },
+      { id: "math-9", subject: "Mathematics", unit: "Unit 9", name: "Differential Equations", target: "Dec 10" },
+      { id: "math-10", subject: "Mathematics", unit: "Unit 10", name: "Co-ordinate Geometry (Straight Lines, Circles, Conic Sections)", target: "Dec 11 – Dec 15" },
+      { id: "math-11", subject: "Mathematics", unit: "Unit 11", name: "Three Dimensional Geometry", target: "Dec 18 – Dec 19" },
+      { id: "math-12", subject: "Mathematics", unit: "Unit 12", name: "Vector Algebra", target: "Dec 16 – Dec 17" },
+      { id: "math-13", subject: "Mathematics", unit: "Unit 13", name: "Statistics and Probability", target: "Dec 21 – Dec 23" },
+      { id: "math-14", subject: "Mathematics", unit: "Unit 14", name: "Trigonometry (Identities, Functions & Inverse Trigonometric Functions)", target: "Dec 02" },
+      { id: "phy-1", subject: "Physics", unit: "Unit 1", name: "Units and Measurements", target: "Nov 24" },
+      { id: "phy-2", subject: "Physics", unit: "Unit 2", name: "Kinematics", target: "Nov 25" },
+      { id: "phy-3", subject: "Physics", unit: "Unit 3", name: "Laws of Motion", target: "Nov 26" },
+      { id: "phy-4", subject: "Physics", unit: "Unit 4", name: "Work, Energy and Power", target: "Nov 27" },
+      { id: "phy-5", subject: "Physics", unit: "Unit 5", name: "Rotational Motion", target: "Nov 28 – Nov 30" },
+      { id: "phy-6", subject: "Physics", unit: "Unit 6", name: "Gravitation", target: "Dec 01" },
+      { id: "phy-7", subject: "Physics", unit: "Unit 7", name: "Properties of Solids and Liquids", target: "Dec 02 – Dec 03" },
+      { id: "phy-8", subject: "Physics", unit: "Unit 8", name: "Thermodynamics", target: "Dec 04" },
+      { id: "phy-9", subject: "Physics", unit: "Unit 9", name: "Kinetic Theory of Gases", target: "Dec 05" },
+      { id: "phy-10", subject: "Physics", unit: "Unit 10", name: "Oscillations and Waves", target: "Dec 07 – Dec 08" },
+      { id: "phy-11", subject: "Physics", unit: "Unit 11", name: "Electrostatics", target: "Dec 09 – Dec 10" },
+      { id: "phy-12", subject: "Physics", unit: "Unit 12", name: "Current Electricity", target: "Dec 11 – Dec 12" },
+      { id: "phy-13", subject: "Physics", unit: "Unit 13", name: "Magnetic Effects of Current and Magnetism", target: "Dec 14 – Dec 15" },
+      { id: "phy-14", subject: "Physics", unit: "Unit 14", name: "Electromagnetic Induction and Alternating Currents", target: "Dec 16 – Dec 17" },
+      { id: "phy-15", subject: "Physics", unit: "Unit 15", name: "Electromagnetic Waves", target: "Dec 18" },
+      { id: "phy-16", subject: "Physics", unit: "Unit 16", name: "Optics (Ray Optics & Wave Optics)", target: "Dec 19 – Dec 23" },
+      { id: "phy-17", subject: "Physics", unit: "Unit 17", name: "Dual Nature of Matter and Radiation", target: "Dec 24" },
+      { id: "phy-18", subject: "Physics", unit: "Unit 18", name: "Atoms and Nuclei", target: "Dec 25 – Dec 26" },
+      { id: "phy-19", subject: "Physics", unit: "Unit 19", name: "Electronic Devices", target: "Dec 28" },
+      { id: "phy-20", subject: "Physics", unit: "Unit 20", name: "Experimental Skills", target: "Nov 24" }
+    ];
+
+    const appId = "jeetrack-2027";
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyCqIsIL_SFksIZ5E0Y_P31p-DudYefAUY8",
+      authDomain: "jeetrack-2027.firebaseapp.com",
+      projectId: "jeetrack-2027",
+      storageBucket: "jeetrack-2027.firebasestorage.app",
+      messagingSenderId: "1023551552513",
+      appId: "1:1023551552513:web:7f7945a86555fb3ea95400",
+      measurementId: "G-6R76Z9FHXL"
+    };
+
+    const STATUS_CYCLE = ["Pending", "In Progress", "Completed"];
+    let db = null, auth = null, currentUser = null, activeUnsub = null, activeRoomId = "";
+    let timerPreset = 50, timerSec = 50 * 60, timerId = null;
+
+    const state = {
+      tab: "today",
+      selectedDate: getClampedToday(),
+      checkinDate: getClampedToday(),
+      weekFilter: "ALL",
+      planQuery: "",
+      sylFilter: "ALL",
+      sylQuery: "",
+      schedule: {},
+      syllabus: {},
+      settings: { morningTime: "07:00", eveningTime: "21:30" }
+    };
+
+    function haptic() {
+      if (window.AndroidBridge && typeof window.AndroidBridge.hapticTick === "function") {
+        try { window.AndroidBridge.hapticTick(); } catch (_) {}
+      }
+    }
+
+    function isoLocal(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function getClampedToday() {
+      const t = isoLocal(new Date());
+      if (t < SCHEDULE_DATA[0].date) return SCHEDULE_DATA[0].date;
+      if (t > SCHEDULE_DATA[SCHEDULE_DATA.length - 1].date) return SCHEDULE_DATA[SCHEDULE_DATA.length - 1].date;
+      return t;
+    }
+
+    function fmtShortDate(iso) {
+      const [y, m, d] = iso.split("-").map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" });
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function getDay(date) {
+      const s = state.schedule[date] || {};
+      return {
+        maths: s.maths || "Pending",
+        physics: s.physics || "Pending",
+        chem: s.chem || "Pending",
+        pyqs: Number(s.pyqs || 0),
+        mock: s.mock !== undefined && s.mock !== null ? String(s.mock) : "",
+        notes: s.notes || ""
+      };
+    }
+
+    function getSyl(id) {
+      const s = state.syllabus[id] || {};
+      return { theory: Boolean(s.theory), pyqs: Boolean(s.pyqs), revision: Boolean(s.revision) };
+    }
+
+    function nextSt(st) {
+      return STATUS_CYCLE[(STATUS_CYCLE.indexOf(st) + 1) % 3];
+    }
+
+    function stClass(st) {
+      return st === "Completed" ? "st-Completed" : (st === "In Progress" ? "st-InProgress" : "st-Pending");
+    }
+
+    function showToast(msg, type = "") {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.className = "toast" + (type ? " " + type : "");
+      t.style.display = "block";
+      clearTimeout(window._t);
+      window._t = setTimeout(() => { t.style.display = "none"; }, 2600);
+    }
+
+    /* ---------------- LOCAL CACHE + FIRESTORE SYNC ---------------- */
+    function saveCache() {
+      try {
+        localStorage.setItem("jeetrack_local_cache", JSON.stringify({
+          schedule: state.schedule, syllabus: state.syllabus, settings: state.settings
+        }));
+      } catch (_) {}
+    }
+
+    function loadCache() {
+      try {
+        const c = JSON.parse(localStorage.getItem("jeetrack_local_cache") || "null");
+        if (!c) return;
+        if (c.schedule) state.schedule = c.schedule;
+        if (c.syllabus) state.syllabus = c.syllabus;
+        if (c.settings) state.settings = { ...state.settings, ...c.settings };
+      } catch (_) {}
+    }
+
+    function setSyncBar(kind, text) {
+      document.getElementById("sync-dot").className = "dot" + (kind ? " " + kind : "");
+      document.getElementById("sync-label").textContent = text;
+    }
+
+    function applyRoomUI(room) {
+      activeRoomId = room;
+      document.getElementById("room-input").value = room;
+      document.getElementById("room-badge").textContent = room ? `Room: ${room}` : "Private"; document.getElementById("leave-room-btn").style.display = room ? "inline-flex" : "none"; }  function syncNativeAlarms() { if (window.AndroidBridge && typeof window.AndroidBridge.updateAlarms === "function") { const [mH, mM] = (state.settings.morningTime \vert{}\vert{} "07:00").split(":").map(Number); const [eH, eM] = (state.settings.eveningTime \vert{}\vert{} "21:30").split(":").map(Number); window.AndroidBridge.updateAlarms(mH, mM, eH, eM); } }  function getDocRef() { if (!db \vert{}\vert{} !currentUser) return null; return activeRoomId ? doc(db, "artifacts", appId, "public", "data", "jeeSyncRooms", activeRoomId) : doc(db, "artifacts", appId, "users", currentUser.uid, "jeeCommandCenter", "state"); }  function subscribeCloud(seedIfEmpty = false) { if (!db \vert{}\vert{} !currentUser) return; if (activeUnsub) { activeUnsub(); activeUnsub = null; } const ref = getDocRef(); if (!ref) return; setSyncBar("saving", activeRoomId ? `Syncing ${activeRoomId}...` : "Syncing...");
+      activeUnsub = onSnapshot(ref, (snap) => {
+        if (snap.exists()) {
+          const d = snap.data();
+          if (d.schedule) state.schedule = d.schedule;
+          if (d.syllabus) state.syllabus = d.syllabus;
+          if (d.settings) {
+            state.settings = { ...state.settings, ...d.settings };
+            document.getElementById("morning-time").value = state.settings.morningTime || "07:00";
+            document.getElementById("evening-time").value = state.settings.eveningTime || "21:30";
+          }
+          saveCache();
+          syncNativeAlarms();
+        } else if (seedIfEmpty) {
+          saveCloud(true);
+        }
+        setSyncBar("synced", activeRoomId ? `Synced • ${activeRoomId}` : "Cloud Synced"); renderAll(); }, (err) => { console.error(err); setSyncBar("error", "Sync Error"); }); }  let saveTimer = null; function saveCloud(immediate = false) { saveCache(); if (!db \vert{}\vert{} !currentUser) { setSyncBar("", "Offline Cache"); return; } const run = async () => { const ref = getDocRef(); if (!ref) return; setSyncBar("saving", "Saving..."); try { await setDoc(ref, { schedule: state.schedule, syllabus: state.syllabus, settings: state.settings, updatedAt: new Date().toISOString() }, { merge: true }); setSyncBar("synced", activeRoomId ? `Synced • ${activeRoomId}` : "Cloud Synced");
+        } catch (err) {
+          console.error(err);
+          setSyncBar("error", "Save Failed");
+          showToast("Cloud save failed — check connection", "error");
+        }
+      };
+      clearTimeout(saveTimer);
+      if (immediate) run(); else saveTimer = setTimeout(run, 300);
+    }
+
+    async function initFirebase() {
+      loadCache();
+      const savedRoom = localStorage.getItem("jeetrack_sync_room") || "";
+      if (savedRoom) applyRoomUI(savedRoom);
+      document.getElementById("morning-time").value = state.settings.morningTime || "07:00";
+      document.getElementById("evening-time").value = state.settings.eveningTime || "21:30";
+      renderAll();
+
+      try {
+        const app = initializeApp(FIREBASE_CONFIG);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        await signInAnonymously(auth);
+        currentUser = auth.currentUser;
+        if (currentUser) {
+          document.getElementById("uid-text").textContent = currentUser.uid;
+          subscribeCloud(Boolean(activeRoomId));
+        }
+      } catch (err) {
+        setSyncBar("error", "Offline Mode");
+        document.getElementById("uid-text").textContent = `Error: ${err.code \vert{}\vert{} err.message}`; } }  /* ---------------- METRICS & COUNTDOWNS ---------------- */ function computeMetrics() { let doneTargets = 0, totalPyqs = 0, mastered = 0, totalTicks = 0; const mocks = [], activeDates = new Set(); SCHEDULE_DATA.forEach(d => { const r = getDay(d.date); ["maths", "physics", "chem"].forEach(k => { if (r[k] === "Completed") doneTargets++; }); totalPyqs += r.pyqs; if (r.mock !== "" && !isNaN(Number(r.mock))) mocks.push(Number(r.mock)); if (r.maths === "Completed" \vert{}\vert{} r.physics === "Completed" \vert{}\vert{} r.chem === "Completed" \vert{}\vert{} r.pyqs > 0) activeDates.add(d.date); });  const todayIdx = SCHEDULE_DATA.findIndex(d => d.date === getClampedToday()); let streak = 0; for (let i = todayIdx; i >= 0; i--) { if (activeDates.has(SCHEDULE_DATA[i].date)) streak++; else if (i === todayIdx) continue; else break; }  const bySubj = { Mathematics: { tot: 0, ticks: 0, mastered: 0, ch: 0, color: "#38BDF8", label: "Mathematics" }, Physics: { tot: 0, ticks: 0, mastered: 0, ch: 0, color: "#A78BFA", label: "Physics" }, POC: { tot: 0, ticks: 0, mastered: 0, ch: 0, color: "#34D399", label: "Physical Chem (POC)" }, IOC: { tot: 0, ticks: 0, mastered: 0, ch: 0, color: "#FBBF24", label: "Inorganic Chem (IOC)" }, OC: { tot: 0, ticks: 0, mastered: 0, ch: 0, color: "#FB7185", label: "Organic Chem (OC)" } }; SYLLABUS_DATA.forEach(s => { const r = getSyl(s.id); const t = (r.theory ? 1 : 0) + (r.pyqs ? 1 : 0) + (r.revision ? 1 : 0); const g = bySubj[s.subject]; g.ch++; g.tot += 3; g.ticks += t; totalTicks += t; if (t === 3) { g.mastered++; mastered++; } });  const now = new Date(); now.setHours(0, 0, 0, 0); const dExam = Math.max(0, Math.ceil((new Date(2027, 0, 22) - now) / 86400000)); const dSyl = Math.max(0, Math.ceil((new Date(2027, 0, 7) - now) / 86400000)); const avgMock = mocks.length ? Math.round(mocks.reduce((a, b) => a + b, 0) / mocks.length) : null;  return { doneTargets, totalTargets: SCHEDULE_DATA.length * 3, schedPct: Math.round((doneTargets / (SCHEDULE_DATA.length * 3)) * 100), mastered, sylPct: Math.round((totalTicks / (SYLLABUS_DATA.length * 3)) * 100), totalPyqs, streak, dExam, dSyl, avgMock, bySubj }; }  /* ---------------- RENDERERS ---------------- */ function renderToday() { const m = computeMetrics(); document.getElementById("top-countdown").textContent = `${m.dExam}d to JEE`;
+      document.getElementById("hero-streak").textContent = `${m.streak}d`;
+      document.getElementById("hero-syl-days").textContent = `${m.dSyl}d`;  const idx = SCHEDULE_DATA.findIndex(d => d.date === state.selectedDate); const item = SCHEDULE_DATA[idx >= 0 ? idx : 0]; const rec = getDay(item.date); const isToday = item.date === getClampedToday();  document.getElementById("today-heading").textContent = `Day ${item.dayNum} · ${fmtShortDate(item.date)}`; document.getElementById("today-sub").textContent = `${item.week} ${isToday ? "• TODAY" : "• Tap to jump Today"}`; document.getElementById("prev-day-btn").disabled = idx <= 0; document.getElementById("next-day-btn").disabled = idx >= SCHEDULE_DATA.length - 1; document.getElementById("hero-pyqs").textContent = rec.pyqs;  const doneCount = [rec.maths, rec.physics, rec.chem].filter(x => x === "Completed").length; const offset = 163.36 * (1 - doneCount / 3); document.getElementById("day-ring").style.strokeDashoffset = offset.toFixed(2); document.getElementById("day-ring-text").textContent = `${doneCount}/3`;
+
+      const specs = [
+        { key: "maths", label: "Mathematics", cls: "tag-m", slot: "4.0h • Morning", topic: item.maths, st: rec.maths },
+        { key: "physics", label: "Physics", cls: "tag-p", slot: "3.5h • Afternoon", topic: item.physics, st: rec.physics },
+        { key: "chem", label: "Chemistry", cls: "tag-c", slot: "2.5h • Evening", topic: item.chem, st: rec.chem }
+      ];
+
+      document.getElementById("today-subjects").innerHTML = specs.map(s => {
+        const cardState = s.st === "Completed" ? "is-done" : (s.st === "In Progress" ? "is-prog" : "");
+        const glyph = s.st === "Completed" ? "✓ Done" : (s.st === "In Progress" ? "● In Progress" : "○ Tap to Start");
+        return `
+          <div class="subj-card ${cardState}">
+            <div class="subj-top">
+              <span class="tag ${s.cls}">${s.label}</span>
+              <span class="slot-txt">${s.slot}</span>
+            </div>
+            <div class="subj-topic">${esc(s.topic)}</div>
+            <button class="status-tap-btn ${stClass(s.st)}" data-cycle-date="${item.date}" data-cycle-key="${s.key}">
+              <span>${glyph}</span>
+              <span style="font-size:11px;opacity:0.85;">Tap to change ›</span>
+            </button>
+          </div>`;
+      }).join("");
+
+      const noteBox = document.getElementById("today-note-card");
+      if (rec.notes || rec.mock) {
+        noteBox.style.display = "block";
+        noteBox.innerHTML = `${rec.mock ? `<div style="color:var(--amber);font-weight:800;margin-bottom:4px;">Mock Score: ${esc(rec.mock)} / 300</div>` : ""}${rec.notes ? `<div><b>Note:</b> ${esc(rec.notes)}</div>` : ""}`;
+      } else {
+        noteBox.style.display = "none";
+      }
+    }
+
+    function renderPlan() {
+      const weeks = ["ALL", "Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6", "Phase 2 Buffer"];
+      document.getElementById("week-chips").innerHTML = weeks.map(w =>
+        `<button class="chip ${state.weekFilter === w ? "active" : ""}" data-week="${w}">${w === "ALL" ? "All (59)" : (w === "Phase 2 Buffer" ? "Buffer (14d)" : w)}</button>` ).join("");  const q = state.planQuery.trim().toLowerCase(); const list = SCHEDULE_DATA.filter(d => { if (state.weekFilter !== "ALL" && d.week !== state.weekFilter) return false; if (q && !`day ${d.dayNum} ${d.date}${fmtShortDate(d.date)} ${d.maths}${d.physics} ${d.chem}`.toLowerCase().includes(q)) return false; return true; }); document.getElementById("plan-count").textContent = `${list.length} days`;
+      const todayIso = getClampedToday();
+
+      document.getElementById("plan-list").innerHTML = list.map(d => {
+        const r = getDay(d.date);
+        const isToday = d.date === todayIso;
+        return `
+          <div class="plan-card ${isToday ? "is-today" : ""}">
+            <div class="plan-head">
+              <div>
+                <span style="font-size:13px;font-weight:900;color:var(--sky);">Day ${d.dayNum} ·${fmtShortDate(d.date)}</span>
+                <div style="font-size:11px;color:var(--muted);">${d.week}${isToday ? " • TODAY" : ""}${r.pyqs ? ` • ${r.pyqs} PYQs` : ""}</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" data-open-sheet="${d.date}">Check-In</button>
+            </div>
+            <div class="plan-line">
+              <span><b style="color:var(--sky);">M:</b> ${esc(d.maths)}</span>
+              <button class="mini-pill ${stClass(r.maths)}" data-cycle-date="${d.date}" data-cycle-key="maths">${r.maths}</button>
+            </div>
+            <div class="plan-line">
+              <span><b style="color:var(--violet);">P:</b> ${esc(d.physics)}</span>
+              <button class="mini-pill ${stClass(r.physics)}" data-cycle-date="${d.date}" data-cycle-key="physics">${r.physics}</button>
+            </div>
+            <div class="plan-line">
+              <span><b style="color:var(--green);">C:</b> ${esc(d.chem)}</span>
+              <button class="mini-pill ${stClass(r.chem)}" data-cycle-date="${d.date}" data-cycle-key="chem">${r.chem}</button>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    function renderSyllabus() {
+      const subjs = ["ALL", "Mathematics", "Physics", "POC", "IOC", "OC"];
+      document.getElementById("syl-chips").innerHTML = subjs.map(s =>
+        `<button class="chip ${state.sylFilter === s ? "active" : ""}" data-syl-subj="${s}">${s === "ALL" ? "All (55)" : (s === "Mathematics" ? "Maths" : s)}</button>` ).join("");  const q = state.sylQuery.trim().toLowerCase(); const list = SYLLABUS_DATA.filter(ch => { if (state.sylFilter !== "ALL" && ch.subject !== state.sylFilter) return false; if (q && !`${ch.subject} ${ch.unit}${ch.name} ${ch.target}`.toLowerCase().includes(q)) return false; return true; });  const masteredTotal = SYLLABUS_DATA.filter(s => { const r = getSyl(s.id); return r.theory && r.pyqs && r.revision; }).length; document.getElementById("syl-mastered-badge").textContent = `${masteredTotal} / 55 Mastered`;
+
+      const tagCls = { Mathematics: "tag-m", Physics: "tag-p", POC: "tag-poc", IOC: "tag-ioc", OC: "tag-oc" };
+      document.getElementById("syl-list").innerHTML = list.map(ch => {
+        const r = getSyl(ch.id);
+        const doneAll = r.theory && r.pyqs && r.revision;
+        return `
+          <div class="syl-card ${doneAll ? "mastered" : ""}">
+            <div class="subj-top">
+              <span class="tag ${tagCls[ch.subject]}">${ch.subject} ·${ch.unit}</span>
+              <span class="slot-txt">${ch.target}</span>
+            </div>
+            <div style="font-size:14px;font-weight:700;margin-top:6px;">${esc(ch.name)}</div>
+            <div class="syl-checks">
+              <button class="syl-btn ${r.theory ? "done" : ""}" data-syl-id="${ch.id}" data-syl-field="theory">${r.theory ? "✓ " : ""}Theory</button>
+              <button class="syl-btn ${r.pyqs ? "done" : ""}" data-syl-id="${ch.id}" data-syl-field="pyqs">${r.pyqs ? "✓ " : ""}PYQs</button>
+              <button class="syl-btn ${r.revision ? "done" : ""}" data-syl-id="${ch.id}" data-syl-field="revision">${r.revision ? "✓ " : ""}Revision</button>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    function renderMe() {
+      const m = computeMetrics();
+      document.getElementById("top-countdown").textContent = `${m.dExam}d to JEE`;
+      document.getElementById("kpi-sched").textContent = `${m.schedPct}%`;
+      document.getElementById("kpi-sched-sub").textContent = `${m.doneTargets} /${m.totalTargets} targets`;
+      document.getElementById("kpi-mastered").textContent = `${m.mastered} / 55`; document.getElementById("kpi-mastered-sub").textContent = `${m.sylPct}% checkpoints`;
+      document.getElementById("kpi-pyqs").textContent = m.totalPyqs;
+      document.getElementById("kpi-mock").textContent = `Avg Mock: ${m.avgMock !== null ? m.avgMock : "--"}/300`; document.getElementById("kpi-streak").textContent = `${m.streak}d`;
+
+      document.getElementById("subject-bars").innerHTML = Object.values(m.bySubj).map(g => {
+        const pct = g.tot ? Math.round((g.ticks / g.tot) * 100) : 0;
+        return `
+          <div class="pbar-row">
+            <div class="pbar-meta">
+              <b>${g.label}</b>
+              <span style="color:${g.color};font-weight:800;">${pct}% (${g.mastered}/${g.ch})</span>
+            </div>
+            <div class="pbar-track"><div class="pbar-fill" style="width:${pct}\%;background:${g.color};"></div></div>
+          </div>`;
+      }).join("");
+
+      const isNative = Boolean(window.AndroidBridge);
+      document.getElementById("native-android-tools").style.display = isNative ? "flex" : "none";
+      document.getElementById("alarm-mode-badge").textContent = isNative ? "Native Android Alarms ✓" : "Web Mode";
+    }
+
+    function renderAll() {
+      if (state.tab === "today") renderToday();
+      else if (state.tab === "plan") renderPlan();
+      else if (state.tab === "syllabus") renderSyllabus();
+      else if (state.tab === "me") renderMe();
+    }
+
+    function switchTab(tab) {
+      haptic();
+      state.tab = tab;
+      document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === `view-${tab}`)); document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.tab === tab)); document.getElementById("fab-checkin").style.display = (tab === "today" \vert{}\vert{} tab === "plan") ? "flex" : "none"; renderAll(); window.scrollTo({ top: 0, behavior: "instant" }); }  /* ---------------- CHECK-IN BOTTOM SHEET ---------------- */ function openCheckInModal(dateStr) { haptic(); const target = dateStr \vert{}\vert{} state.selectedDate; const item = SCHEDULE_DATA.find(d => d.date === target) \vert{}\vert{} SCHEDULE_DATA[0]; state.checkinDate = item.date; const rec = getDay(item.date);  document.getElementById("sheet-sub").textContent = `Day ${item.dayNum} · ${fmtShortDate(item.date)} (${item.week})`;
+      document.getElementById("sheet-pyqs").value = rec.pyqs || "";
+      document.getElementById("sheet-mock").value = rec.mock;
+      document.getElementById("sheet-notes").value = rec.notes;
+
+      const list = [
+        { k: "maths", name: "Mathematics", col: "var(--sky)", topic: item.maths, done: rec.maths === "Completed" },
+        { k: "physics", name: "Physics", col: "var(--violet)", topic: item.physics, done: rec.physics === "Completed" },
+        { k: "chem", name: "Chemistry", col: "var(--green)", topic: item.chem, done: rec.chem === "Completed" }
+      ];
+      document.getElementById("sheet-subjects").innerHTML = list.map(s => `
+        <label class="chk-row">
+          <input type="checkbox" class="sheet-chk" data-k="${s.k}" ${s.done ? "checked" : ""} />
+          <div>
+            <div style="font-size:11px;font-weight:800;color:${s.col};text-transform:uppercase;">${s.name}</div>
+            <div style="font-size:13.5px;font-weight:700;margin-top:2px;">${esc(s.topic)}</div>
+          </div>
+        </label>`).join("");
+
+      document.getElementById("checkin-sheet").classList.add("open");
+    }
+
+    function closeCheckInModal() {
+      document.getElementById("checkin-sheet").classList.remove("open");
+    }
+
+    function saveCheckIn() {
+      haptic();
+      const item = SCHEDULE_DATA.find(d => d.date === state.checkinDate) || SCHEDULE_DATA[0];
+      const prev = getDay(item.date);
+      const checks = {};
+      document.querySelectorAll(".sheet-chk").forEach(c => { checks[c.dataset.k] = c.checked; });
+
+      state.schedule[item.date] = {
+        maths: checks.maths ? "Completed" : (prev.maths === "Completed" ? "In Progress" : prev.maths),
+        physics: checks.physics ? "Completed" : (prev.physics === "Completed" ? "In Progress" : prev.physics),
+        chem: checks.chem ? "Completed" : (prev.chem === "Completed" ? "In Progress" : prev.chem),
+        pyqs: Math.max(0, parseInt(document.getElementById("sheet-pyqs").value, 10) || 0),
+        mock: document.getElementById("sheet-mock").value.trim(),
+        notes: document.getElementById("sheet-notes").value.trim()
+      };
+
+      const aT = document.getElementById("auto-theory").checked;
+      const aP = document.getElementById("auto-pyqs").checked;
+      const aR = document.getElementById("auto-rev").checked;
+      ["maths", "physics", "chem"].forEach(k => {
+        if (!checks[k]) return;
+        (item.links[k] || []).forEach(id => {
+          const cur = getSyl(id);
+          state.syllabus[id] = { theory: cur.theory || aT, pyqs: cur.pyqs || aP, revision: cur.revision || aR };
+        });
+      });
+
+      saveCloud(true);
+      closeCheckInModal();
+      renderAll();
+      showToast(`Day ${item.dayNum} saved & synced!`, "success");
+    }
+
+    // Native Android hooks (notification deep-link + hardware back gesture)
+    window.openCheckInModal = openCheckInModal;
+    window.handleAndroidBack = function() {
+      if (document.getElementById("checkin-sheet").classList.contains("open")) {
+        closeCheckInModal();
+        return true;
+      }
+      if (state.tab !== "today") {
+        switchTab("today");
+        return true;
+      }
+      return false;
+    };
+
+    /* ---------------- TIMER & EXPORTS ---------------- */
+    function renderTimer() {
+      const mm = String(Math.floor(timerSec / 60)).padStart(2, "0");
+      const ss = String(timerSec % 60).padStart(2, "0");
+      document.getElementById("timer-display").textContent = `${mm}:${ss}`;
+    }
+
+    function deliverFile(name, text, mime) {
+      if (window.AndroidBridge && typeof window.AndroidBridge.shareExportText === "function") {
+        window.AndroidBridge.shareExportText(name, text);
+        return;
+      }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+      a.download = name;
+      a.click();
+    }
+
+    function exportICS() {
+      const m = (state.settings.morningTime || "07:00").replace(":", "") + "00";
+      const e = (state.settings.eveningTime || "21:30").replace(":", "") + "00";
+      const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//JEETrack//2027//EN"];
+      SCHEDULE_DATA.forEach(d => {
+        const dt = d.date.replace(/-/g, "");
+        lines.push(
+          "BEGIN:VEVENT", `UID:jt-m-${dt}@jeetrack.app`, `DTSTART:${dt}T${m}`, `DTEND:${dt}T${m}`,
+          `SUMMARY:JEE Day ${d.dayNum}: ${d.week}`, `DESCRIPTION:Maths: ${d.maths}\\nPhysics: ${d.physics}\\nChem:${d.chem}`,
+          "BEGIN:VALARM", "TRIGGER:-PT0M", "ACTION:DISPLAY", "DESCRIPTION:Morning Study", "END:VALARM", "END:VEVENT",
+          "BEGIN:VEVENT", `UID:jt-e-${dt}@jeetrack.app`, `DTSTART:${dt}T${e}`, `DTEND:${dt}T${e}`,
+          `SUMMARY:JEE Day ${d.dayNum} Check-In`, `DESCRIPTION:Mark completed chapters & log PYQs`,
+          "BEGIN:VALARM", "TRIGGER:-PT0M", "ACTION:DISPLAY", "DESCRIPTION:Check-In", "END:VALARM", "END:VEVENT"
+        );
+      });
+      lines.push("END:VCALENDAR");
+      deliverFile("JEETrack_118_Alarms.ics", lines.join("\r\n"), "text/calendar");
+      showToast("Exported 118 calendar alerts!", "success");
+    }
+
+    /* ---------------- EVENTS & SWIPE GESTURES ---------------- */
+    document.querySelectorAll(".nav-item").forEach(btn => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
+    document.getElementById("fab-checkin").addEventListener("click", () => openCheckInModal(state.selectedDate));
+    document.getElementById("sheet-cancel").addEventListener("click", closeCheckInModal);
+    document.getElementById("sheet-save").addEventListener("click", saveCheckIn);
+    document.getElementById("checkin-sheet").addEventListener("click", e => { if (e.target.id === "checkin-sheet") closeCheckInModal(); });
+    document.getElementById("sheet-mark-all").addEventListener("click", () => {
+      haptic();
+      document.querySelectorAll(".sheet-chk").forEach(c => { c.checked = true; });
+    });
+    document.getElementById("add-20-pyq").addEventListener("click", () => {
+      haptic();
+      const inp = document.getElementById("sheet-pyqs");
+      inp.value = (parseInt(inp.value, 10) || 0) + 20;
+    });
+
+    function shiftDay(delta) {
+      const idx = SCHEDULE_DATA.findIndex(d => d.date === state.selectedDate);
+      const next = idx + delta;
+      if (next >= 0 && next < SCHEDULE_DATA.length) {
+        haptic();
+        state.selectedDate = SCHEDULE_DATA[next].date;
+        renderToday();
+      }
+    }
+    document.getElementById("prev-day-btn").addEventListener("click", () => shiftDay(-1));
+    document.getElementById("next-day-btn").addEventListener("click", () => shiftDay(1));
+    document.getElementById("jump-today-tap").addEventListener("click", () => {
+      haptic();
+      state.selectedDate = getClampedToday();
+      renderToday();
+      showToast("Jumped to Today");
+    });
+
+    // Swipe left/right on Today card to change days
+    let touchX = 0;
+    const swipeEl = document.getElementById("swipe-area");
+    swipeEl.addEventListener("touchstart", e => { touchX = e.changedTouches[0].screenX; }, { passive: true });
+    swipeEl.addEventListener("touchend", e => {
+      const dx = e.changedTouches[0].screenX - touchX;
+      if (Math.abs(dx) > 55) shiftDay(dx < 0 ? 1 : -1);
+    }, { passive: true });
+
+    // Delegated clicks for status cycling, chips, and syllabus ticks
+    document.body.addEventListener("click", e => {
+      const cyc = e.target.closest("[data-cycle-date]");
+      if (cyc) {
+        haptic();
+        const dt = cyc.dataset.cycleDate, k = cyc.dataset.cycleKey;
+        const rec = getDay(dt);
+        state.schedule[dt] = { ...rec, [k]: nextSt(rec[k]) };
+        saveCloud(true);
+        renderAll();
+        return;
+      }
+      const openS = e.target.closest("[data-open-sheet]");
+      if (openS) { openCheckInModal(openS.dataset.openSheet); return; }
+
+      const wk = e.target.closest("[data-week]");
+      if (wk) { haptic(); state.weekFilter = wk.dataset.week; renderPlan(); return; }
+
+      const ss = e.target.closest("[data-syl-subj]");
+      if (ss) { haptic(); state.sylFilter = ss.dataset.sylSubj; renderSyllabus(); return; }
+
+      const sb = e.target.closest("[data-syl-id]");
+      if (sb) {
+        haptic();
+        const id = sb.dataset.sylId, f = sb.dataset.sylField;
+        const r = getSyl(id);
+        state.syllabus[id] = { ...r, [f]: !r[f] };
+        saveCloud(true);
+        renderSyllabus();
+      }
+    });
+
+    document.getElementById("plan-search").addEventListener("input", e => { state.planQuery = e.target.value; renderPlan(); });
+    document.getElementById("syl-search").addEventListener("input", e => { state.sylQuery = e.target.value; renderSyllabus(); });
+
+    // Focus Timer
+    document.getElementById("timer-mode-btn").addEventListener("click", () => {
+      haptic();
+      timerPreset = timerPreset === 50 ? 25 : (timerPreset === 25 ? 15 : 50);
+      document.getElementById("timer-mode-btn").textContent = `${timerPreset}m`;
+      if (!timerId) { timerSec = timerPreset * 60; renderTimer(); }
+    });
+    document.getElementById("timer-toggle-btn").addEventListener("click", () => {
+      haptic();
+      const btn = document.getElementById("timer-toggle-btn");
+      if (timerId) { clearInterval(timerId); timerId = null; btn.textContent = "Start"; }
+      else {
+        btn.textContent = "Pause";
+        timerId = setInterval(() => {
+          if (timerSec > 0) { timerSec--; renderTimer(); }
+          else { clearInterval(timerId); timerId = null; btn.textContent = "Start"; showToast("Study block complete!", "success"); }
+        }, 1000);
+      }
+    });
+    document.getElementById("timer-reset-btn").addEventListener("click", () => {
+      haptic();
+      if (timerId) { clearInterval(timerId); timerId = null; document.getElementById("timer-toggle-btn").textContent = "Start"; }
+      timerSec = timerPreset * 60; renderTimer();
+    });
+
+    // Sync Room & Alarms
+    document.getElementById("gen-room-btn").addEventListener("click", () => {
+      haptic();
+      document.getElementById("room-input").value = "jee27-" + Math.random().toString(36).substring(2, 8);
+    });
+    document.getElementById("connect-room-btn").addEventListener("click", () => {
+      haptic();
+      const clean = document.getElementById("room-input").value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, "");
+      if (clean.length < 4) { showToast("Use at least 4 characters", "warn"); return; }
+      localStorage.setItem("jeetrack_sync_room", clean);
+      applyRoomUI(clean);
+      if (db && currentUser) subscribeCloud(true);
+      showToast(`Connected to ${clean}`, "success");
+    });
+    document.getElementById("leave-room-btn").addEventListener("click", () => {
+      haptic();
+      localStorage.removeItem("jeetrack_sync_room");
+      applyRoomUI("");
+      if (db && currentUser) subscribeCloud(false);
+      showToast("Switched to Private Session");
+    });
+
+    document.getElementById("save-alarms-btn").addEventListener("click", () => {
+      haptic();
+      state.settings.morningTime = document.getElementById("morning-time").value || "07:00";
+      state.settings.eveningTime = document.getElementById("evening-time").value || "21:30";
+      saveCloud(true);
+      syncNativeAlarms();
+      showToast(`Alarms saved: ${state.settings.morningTime} & ${state.settings.eveningTime}`, "success"); }); document.getElementById("test-morning-btn").addEventListener("click", () => { haptic(); if (window.AndroidBridge) window.AndroidBridge.sendTestNotification("morning"); else showToast("Open inside JEETrack Android app to test native alarms"); }); document.getElementById("test-evening-btn").addEventListener("click", () => { haptic(); if (window.AndroidBridge) window.AndroidBridge.sendTestNotification("evening"); else showToast("Open inside JEETrack Android app to test native alarms"); }); document.getElementById("exact-alarm-btn").addEventListener("click", () => { if (window.AndroidBridge) window.AndroidBridge.openExactAlarmSettings(); }); document.getElementById("battery-btn").addEventListener("click", () => { if (window.AndroidBridge) window.AndroidBridge.openBatterySettings(); }); document.getElementById("export-ics-btn").addEventListener("click", exportICS); document.getElementById("export-json-btn").addEventListener("click", () => { deliverFile(`JEETrack_Backup_${isoLocal(new Date())}.json`, JSON.stringify({
+        schedule: state.schedule, syllabus: state.syllabus, settings: state.settings
+      }, null, 2), "application/json");
+      showToast("Backup exported!", "success");
+    });
+
+    // Boot
+    renderTimer();
+    initFirebase();
+  </script>
+</body>
+</html>
